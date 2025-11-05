@@ -1,5 +1,5 @@
-import { NewsArticle } from '@/data/mockNews';
-import React, { useRef, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import Animated, {
@@ -9,57 +9,68 @@ import Animated, {
     useSharedValue,
     withSpring
 } from 'react-native-reanimated';
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.95;
 
-interface VerticalNewsCarouselProps {
-  articles: NewsArticle[];
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.85;
+
+interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  published_at: string;
+  image_url: string | null;
 }
 
-export function VerticalNewsCarousel({ articles }: VerticalNewsCarouselProps) {
+interface VerticalNewsCarouselProps {
+  category: string;
+}
+
+export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
+  const [articles, setArticles] = useState<NewsItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   const pagerRef = useRef<PagerView>(null);
-  const scrollY = useSharedValue(0);
+  const activeIndex = useSharedValue(0);
+
+  // ✅ Fetch news by category from Supabase
+  useEffect(() => {
+    const fetchNews = async () => {
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('category', category)
+        .eq('is_published', true)
+        .order('published_at', { ascending: false });
+
+      if (!error && data) {
+        setArticles(data);
+      }
+      setLoading(false);
+    };
+
+    fetchNews();
+  }, [category]);
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) {
-      return 'Just now';
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d ago`;
-    }
+    return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
   };
 
-  const navigateUp = () => {
-    if (currentIndex > 0) {
-      pagerRef.current?.setPage(currentIndex - 1);
-    }
-  };
-
-  const navigateDown = () => {
-    if (currentIndex < articles.length - 1) {
-      pagerRef.current?.setPage(currentIndex + 1);
-    }
-  };
-
-  const renderCard = (article: NewsArticle, index: number) => {
+  const NewsCard = ({ article, index }: { article: NewsItem; index: number }) => {
     const animatedStyle = useAnimatedStyle(() => {
       const scale = interpolate(
-        scrollY.value,
-        [(index - 1) * CARD_HEIGHT, index * CARD_HEIGHT, (index + 1) * CARD_HEIGHT],
+        activeIndex.value,
+        [index - 1, index, index + 1],
         [0.9, 1, 0.9],
         Extrapolate.CLAMP
       );
 
       const opacity = interpolate(
-        scrollY.value,
-        [(index - 1) * CARD_HEIGHT, index * CARD_HEIGHT, (index + 1) * CARD_HEIGHT],
+        activeIndex.value,
+        [index - 1, index, index + 1],
         [0.5, 1, 0.5],
         Extrapolate.CLAMP
       );
@@ -71,28 +82,51 @@ export function VerticalNewsCarousel({ articles }: VerticalNewsCarouselProps) {
     });
 
     return (
-      <Animated.View key={article.id} style={[styles.cardContainer, animatedStyle]}>
+      <Animated.View style={[styles.cardContainer, animatedStyle]}>
         <View style={styles.card}>
-          <Image source={{ uri: article.imageUrl }} style={styles.image} />
+          {article.image_url && (
+            <Image
+              source={{ uri: article.image_url }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          )}
           <View style={styles.overlay} />
-          
+
           <View style={styles.content}>
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryText}>{article.category.toUpperCase()}</Text>
             </View>
-            
-            <Text style={styles.headline}>{article.headline}</Text>
-            <Text style={styles.description}>{article.description}</Text>
-            
+
+            <Text style={styles.headline} numberOfLines={3}>{article.title}</Text>
+            <Text style={styles.description} numberOfLines={4}>
+              {article.content?.slice(0, 140)}...
+            </Text>
+
             <View style={styles.footer}>
-              <Text style={styles.source}>{article.source}</Text>
-              <Text style={styles.date}>{formatDate(article.publishedAt)}</Text>
+              <Text style={styles.date}>{formatDate(article.published_at)}</Text>
             </View>
           </View>
         </View>
       </Animated.View>
     );
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: '#fff' }}>Loading News...</Text>
+      </View>
+    );
+  }
+
+  if (articles.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: '#fff' }}>No articles found</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -103,13 +137,16 @@ export function VerticalNewsCarousel({ articles }: VerticalNewsCarouselProps) {
         onPageSelected={(e) => {
           const newIndex = e.nativeEvent.position;
           setCurrentIndex(newIndex);
-          scrollY.value = withSpring(newIndex * CARD_HEIGHT);
+          activeIndex.value = withSpring(newIndex, {
+            damping: 15,
+            stiffness: 100,
+          });
         }}
-        scrollEnabled={true}
+        scrollEnabled
       >
         {articles.map((article, index) => (
           <View key={article.id} style={styles.page}>
-            {renderCard(article, index)}
+            <NewsCard article={article} index={index} />
           </View>
         ))}
       </PagerView>
@@ -118,161 +155,89 @@ export function VerticalNewsCarousel({ articles }: VerticalNewsCarouselProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FF0000',
+  container: { flex: 1, backgroundColor: '#000' },
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#000' 
   },
-  pager: {
-    flex: 1,
+  pager: { flex: 1 },
+  page: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    paddingHorizontal: 20 
   },
-  page: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  cardContainer: {
-    width: SCREEN_WIDTH - 2,
-    height: CARD_HEIGHT,
+  cardContainer: { 
+    width: SCREEN_WIDTH - 40, 
+    height: CARD_HEIGHT 
   },
   card: {
     flex: 1,
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#FF0000',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 15,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
+    backgroundColor: '#1F2937',
   },
-  image: {
-    width: '100%',
-    height: '40%',
-    backgroundColor: '#F3F4F6',
+  image: { 
+    width: '100%', 
+    height: '40%', 
+    backgroundColor: '#374151' 
   },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '40%',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  overlay: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    height: '40%', 
+    backgroundColor: 'rgba(0,0,0,0.3)' 
   },
   content: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
     height: '60%',
-    padding: 40,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 48, // Increased for a smoother, more elegant curve
-    borderTopRightRadius: 48, // Increased for a smoother, more elegant curve
-    shadowColor: '#FF0000',
-    shadowOffset: {
-      width: 0,
-      height: -10, // Adjusted to emphasize the curve shadow
-    },
-    shadowOpacity: 0.2, // Softened for elegance
-    shadowRadius: 3, // Reduced for a more refined shadow
-    elevation: 3, // Slightly reduced for balance
+    padding: 24, 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 32, 
+    borderTopRightRadius: 32,
   },
-  categoryBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginTop: -24,
-    marginBottom: 32,
+  categoryBadge: { 
+    alignSelf: 'flex-start', 
+    backgroundColor: '#2563EB', 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 16, 
+    marginTop: -16, 
+    marginBottom: 16 
   },
-  categoryText: {
-    fontSize: 10,
-    fontFamily: 'Inter-Bold',
-    color: '#FFFFFF',
-    letterSpacing: 1,
+  categoryText: { 
+    fontSize: 10, 
+    color: '#fff', 
+    fontWeight: '600' 
   },
-  headline: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#1F2937',
-    lineHeight: 32,
+  headline: { 
+    fontSize: 22, 
+    fontWeight: '700', 
+    color: '#1F2937', 
     marginBottom: 12,
+    lineHeight: 28 
   },
-  description: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    lineHeight: 24,
-    marginBottom: 20,
+  description: { 
+    fontSize: 15, 
+    color: '#6B7280', 
+    lineHeight: 22, 
+    marginBottom: 10 
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 32,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+  footer: { 
+    flexDirection: 'row', 
+    justifyContent: 'flex-end', 
+    paddingTop: 12,
+    marginTop: 'auto'
   },
-  source: {
-    fontSize: 8,
-    fontFamily: 'Inter-SemiBold',
-    color: '#2563EB',
-    
-  },
-  date: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-  },
-  navigationContainer: {
-    position: 'absolute',
-    right: 24,
-    top: '50%',
-    transform: [{ translateY: -60 }],
-    alignItems: 'center',
-    gap: 12,
-  },
-  navButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navButtonDisabled: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  indicator: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  indicatorText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#FFFFFF',
-  },
-  progressContainer: {
-    position: 'absolute',
-    left: 24,
-    top: '50%',
-    transform: [{ translateY: -40 }],
-    gap: 8,
-  },
-  progressDot: {
-    width: 4,
-    height: 20,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  progressDotActive: {
-    backgroundColor: '#FFFFFF',
-  },
+  date: { 
+    fontSize: 13, 
+    color: '#9CA3AF' 
+  }
 });
