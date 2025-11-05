@@ -1,33 +1,56 @@
+// app/(tabs)/layout.tsx
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { Tabs } from 'expo-router';
 import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme(); // 'light' | 'dark' | null
+
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarShowLabel: true,               // show the text under icons
+        tabBarActiveTintColor: isDark ? '#60A5FA' : '#2563EB', // blue-400 / blue-600
+        tabBarInactiveTintColor: isDark ? '#9CA3AF' : '#6B7280', // gray-400 / gray-500
+        tabBarStyle: {
+          backgroundColor: isDark ? '#111827' : '#FFFFFF',
+          borderTopColor: isDark ? '#1F2937' : '#E5E7EB',
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontFamily: 'Inter-Medium',
+          marginTop: 2,
+        },
+      }}
+    >
+      {/* ---------- HOME (News Feed) ---------- */}
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <AntDesign name="home" size={24} color={color} />,
         }}
       />
+
+      {/* ---------- SEARCH ---------- */}
       <Tabs.Screen
-        name="explore"
+        name="search"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Search',
+          tabBarIcon: ({ color }) => <AntDesign name="search" size={24} color={color} />,
+        }}
+      />
+
+      {/* ---------- PROFILE ---------- */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <AntDesign name="profile" size={24} color={color} />,
         }}
       />
     </Tabs>
