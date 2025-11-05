@@ -1,32 +1,47 @@
-import { NewsArticle, mockNewsData } from '@/data/mockNews';
+import { supabase } from '@/lib/supabase'; // Adjust path as needed
 import { Bell, BookOpen, Globe, Search, TrendingUp, Users, X } from 'lucide-react-native';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    FlatList,
-    Image,
-    Keyboard,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Keyboard,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Animated, {
-    FadeIn,
-    FadeOut,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const tabs = [
-  { id: 'myfeed', title: 'My Feed' },
-  { id: 'allnews', title: 'All News' },
-  { id: 'topstories', title: 'Top Stories' },
-  { id: 'trending', title: 'Trending' },
-];
+interface NewsArticle {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  image_url: string;
+  author_id: string;
+  published_at: string;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const insightsData = [
   {
@@ -55,10 +70,82 @@ const insightsData = [
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('myfeed');
+  const [activeTab, setActiveTab] = useState('allnews');
   const [isSearching, setIsSearching] = useState(false);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const searchScale = useSharedValue(1);
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError('Failed to load categories');
+    }
+  };
+
+  // Fetch news articles
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let query = supabase
+        .from('news')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setArticles(data || []);
+    } catch (err) {
+      console.error('Error fetching news:', err);
+      setError('Failed to load news articles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchCategories();
+    fetchNews();
+  }, []);
+
+  // Refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchCategories(), fetchNews()]);
+    setRefreshing(false);
+  }, []);
+
+  // Build tabs dynamically from categories
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      { id: 'allnews', title: 'All News' },
+    ];
+    
+    const categoryTabs = categories.map(cat => ({
+      id: cat.name.toLowerCase(),
+      title: cat.name,
+    }));
+
+    return [...baseTabs, ...categoryTabs];
+  }, [categories]);
 
   // Debounce search input
   useEffect(() => {
@@ -76,33 +163,28 @@ export default function SearchScreen() {
 
   // Filter articles based on search query and active tab
   const filteredArticles = useMemo(() => {
-    let articles = mockNewsData;
+    let filtered = articles;
     
-    // Filter by tab
-    if (activeTab === 'topstories') {
-      articles = articles.filter(article => article.category === 'topstories');
-    } else if (activeTab === 'trending') {
-      articles = articles.filter(article => article.category === 'trending');
-    } else if (activeTab === 'myfeed') {
-      // Show personalized content (for demo, show top stories and trending)
-      articles = articles.filter(article => 
-        article.category === 'topstories' || article.category === 'trending'
+    // Filter by tab/category
+    if (activeTab !== 'allnews') {
+      filtered = filtered.filter(article => 
+        article.category?.toLowerCase() === activeTab.toLowerCase()
       );
     }
 
     // Filter by search query
     if (debouncedQuery.trim()) {
       const query = debouncedQuery.toLowerCase();
-      articles = articles.filter(
+      filtered = filtered.filter(
         article =>
-          article.headline.toLowerCase().includes(query) ||
-          article.description.toLowerCase().includes(query) ||
-          article.source.toLowerCase().includes(query)
+          article.title.toLowerCase().includes(query) ||
+          article.content.toLowerCase().includes(query) ||
+          article.category?.toLowerCase().includes(query)
       );
     }
 
-    return articles;
-  }, [debouncedQuery, activeTab]);
+    return filtered;
+  }, [articles, debouncedQuery, activeTab]);
 
   // Highlight matching keywords
   const highlightText = (text: string, query: string) => {
@@ -191,39 +273,54 @@ export default function SearchScreen() {
     );
   };
 
-  const renderNewsCard = ({ item, index }: { item: NewsArticle; index: number }) => (
-    <Animated.View
-      entering={FadeIn.delay(index * 100).springify()}
-      exiting={FadeOut}
-    >
-      <TouchableOpacity
-        style={styles.newsCard}
-        activeOpacity={0.7}
-        onPress={() => {
-          console.log('Article pressed:', item.headline);
-        }}
+  const renderNewsCard = ({ item, index }: { item: NewsArticle; index: number }) => {
+    // Extract first 150 characters as description
+    const description = item.content.substring(0, 150) + '...';
+    
+    return (
+      <Animated.View
+        entering={FadeIn.delay(index * 100).springify()}
+        exiting={FadeOut}
       >
-        <Image source={{ uri: item.imageUrl }} style={styles.newsThumbnail} />
-        <View style={styles.newsContent}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
-          </View>
-          <Text style={styles.newsTitle} numberOfLines={2}>
-            {debouncedQuery ? highlightText(item.headline, debouncedQuery) : item.headline}
-          </Text>
-          <Text style={styles.newsDescription} numberOfLines={2}>
-            {debouncedQuery ? highlightText(item.description, debouncedQuery) : item.description}
-          </Text>
-          <View style={styles.newsFooter}>
-            <Text style={styles.newsSource}>
-              {debouncedQuery ? highlightText(item.source, debouncedQuery) : item.source}
+        <TouchableOpacity
+          style={styles.newsCard}
+          activeOpacity={0.7}
+          onPress={() => {
+            console.log('Article pressed:', item.title);
+          }}
+        >
+          {item.image_url && (
+            <Image 
+              source={{ uri: item.image_url }} 
+              style={styles.newsThumbnail}
+              defaultSource={require('@/assets/images/logo.png')} // Add placeholder
+            />
+          )}
+          <View style={styles.newsContent}>
+            {item.category && (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
+              </View>
+            )}
+            <Text style={styles.newsTitle} numberOfLines={2}>
+              {debouncedQuery ? highlightText(item.title, debouncedQuery) : item.title}
             </Text>
-            <Text style={styles.newsDate}>{formatDate(item.publishedAt)}</Text>
+            <Text style={styles.newsDescription} numberOfLines={2}>
+              {debouncedQuery ? highlightText(description, debouncedQuery) : description}
+            </Text>
+            <View style={styles.newsFooter}>
+              <Text style={styles.newsSource}>
+                {item.category || 'News'}
+              </Text>
+              <Text style={styles.newsDate}>
+                {formatDate(item.published_at || item.created_at)}
+              </Text>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   const renderEmptyState = () => (
     <Animated.View
@@ -237,6 +334,31 @@ export default function SearchScreen() {
       </Text>
     </Animated.View>
   );
+
+  const renderErrorState = () => (
+    <Animated.View
+      entering={FadeIn.delay(300)}
+      style={styles.emptyState}
+    >
+      <Text style={styles.emptyTitle}>Something went wrong</Text>
+      <Text style={styles.emptyDescription}>{error}</Text>
+      <TouchableOpacity 
+        style={styles.retryButton}
+        onPress={onRefresh}
+      >
+        <Text style={styles.retryButtonText}>Retry</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.container, styles.centerContent, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color="#2563EB" />
+        <Text style={styles.loadingText}>Loading news...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
@@ -309,10 +431,18 @@ export default function SearchScreen() {
       </View>
 
       {/* Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* News Results */}
         <View style={styles.newsSection}>
-          {filteredArticles.length > 0 ? (
+          {error ? (
+            renderErrorState()
+          ) : filteredArticles.length > 0 ? (
             <FlatList
               data={filteredArticles}
               renderItem={renderNewsCard}
@@ -332,17 +462,19 @@ export default function SearchScreen() {
         </View>
 
         {/* Insights Section */}
-        <View style={styles.insightsSection}>
-          <Text style={styles.sectionTitle}>Insights for You</Text>
-          <FlatList
-            data={insightsData}
-            renderItem={renderInsightCard}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.insightsList}
-          />
-        </View>
+        {!searchQuery && (
+          <View style={styles.insightsSection}>
+            <Text style={styles.sectionTitle}>Insights for You</Text>
+            <FlatList
+              data={insightsData}
+              renderItem={renderInsightCard}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.insightsList}
+            />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -352,6 +484,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   stickyHeader: {
     backgroundColor: '#F9FAFB',
@@ -579,10 +715,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
+    marginTop: 8,
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
   },
   insightsSection: {
     paddingTop: 24,
-    paddingBottom: 100, // Account for tab bar
+    paddingBottom: 100,
   },
   sectionTitle: {
     fontSize: 20,
