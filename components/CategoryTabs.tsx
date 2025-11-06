@@ -31,17 +31,12 @@ const AnimatedTabLabel = React.memo(({
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: withSpring(scale.value, {
-      damping: 12,
-      stiffness: 180,
-    }) }],
+    transform: [{ scale: withSpring(scale.value, { damping: 12, stiffness: 180 }) }],
   }));
 
   return (
     <Pressable
-      onPressIn={() => {
-        scale.value = 0.93;
-      }}
+      onPressIn={() => (scale.value = 0.93)}
       onPressOut={() => {
         scale.value = 1;
         onPress();
@@ -52,13 +47,7 @@ const AnimatedTabLabel = React.memo(({
       ]}
     >
       <Animated.View style={animatedStyle}>
-        <Text
-          style={[
-            styles.tabLabel,
-            { color },
-            focused && styles.activeTabLabel,
-          ]}
-        >
+        <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
           {route.title}
         </Text>
       </Animated.View>
@@ -91,28 +80,35 @@ export function CategoryTabs() {
       }
       setLoading(false);
     };
-
     fetchCategories();
   }, []);
 
   const renderScene = useMemo(() => {
-    return ({ route }: { route: RouteType }) => {
-      return <VerticalNewsCarousel category={route.title} />;
-    };
+    return ({ route }: { route: RouteType }) => (
+      <VerticalNewsCarousel category={route.title} />
+    );
   }, []);
 
   const renderTabBar = useMemo(() => {
     return (props: SceneRendererProps & { navigationState: NavigationState<RouteType> }) => (
-      <View style={styles.tabBarContainer}>
+      <View style={styles.tabBarWrapper}>
         <TabBar
           {...props}
-          indicatorStyle={styles.indicator}
-          style={styles.tabBar}
           scrollEnabled
+          indicatorStyle={{ height: 0 }} // no underline indicator
+          style={styles.tabBar}
           tabStyle={styles.tab}
-          activeColor="#FFFFFF"
-          inactiveColor="#6B7280"
-        
+          renderLabel={({ route, focused }) => (
+            <AnimatedTabLabel
+              route={route}
+              focused={focused}
+              color={focused ? '#FFFFFF' : '#9CA3AF'}
+              onPress={() => {
+                const newIndex = props.navigationState.routes.findIndex(r => r.key === route.key);
+                setIndex(newIndex);
+              }}
+            />
+          )}
         />
       </View>
     );
@@ -153,58 +149,64 @@ export function CategoryTabs() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A'
+    backgroundColor: '#0B0B0B',
   },
+
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0A0A0A'
+    backgroundColor: '#0B0B0B',
   },
   loadingText: {
-    color: '#E5E7EB',
+    color: '#D1D5DB',
     fontSize: 16,
     fontWeight: '500',
   },
-  tabBarContainer: {
-    backgroundColor: '#0A0A0A',
+
+  tabBarWrapper: {
+    paddingTop: 14,
+    paddingBottom: 8,
     paddingHorizontal: 12,
-    paddingTop: 24,
-    paddingBottom: 12,
+    backgroundColor: 'rgba(20,20,20,0.75)',
+    borderBottomColor: '#1F2937',
+    borderBottomWidth: 1,
   },
+
   tabBar: {
     backgroundColor: 'transparent',
     elevation: 0,
     shadowOpacity: 0,
   },
-  indicator: {
-    backgroundColor: '#0EA5E9',
-    height: 3,
-    borderRadius: 2,
-  },
+
   tab: {
     width: 'auto',
-    minWidth: 70,
+    marginHorizontal: 4,
   },
+
   labelContainer: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
+
   activeLabelContainer: {
     backgroundColor: '#0EA5E9',
+    shadowColor: '#0EA5E9',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
+
   tabLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#9CA3AF',
+    letterSpacing: 0.3,
   },
+
   activeTabLabel: {
-    fontWeight: '700',
-    fontSize: 15,
     color: '#FFFFFF',
   },
 });
