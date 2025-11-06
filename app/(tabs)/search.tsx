@@ -293,7 +293,7 @@ export default function SearchScreen() {
             <Image 
               source={{ uri: item.image_url }} 
               style={styles.newsThumbnail}
-              defaultSource={require('@/assets/images/logo.png')} // Add placeholder
+             
             />
           )}
           <View style={styles.newsContent}>

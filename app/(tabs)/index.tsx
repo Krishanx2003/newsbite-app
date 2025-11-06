@@ -1,4 +1,4 @@
-
+// app/(tabs)/index.tsx 
 import { CategoryTabs } from '@/components/CategoryTabs';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';

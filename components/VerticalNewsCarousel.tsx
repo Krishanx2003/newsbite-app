@@ -12,8 +12,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.88;
-const CARD_WIDTH = SCREEN_WIDTH - 32; // 16px padding on each side
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.90;
+const CARD_WIDTH = SCREEN_WIDTH - 5; // 16px padding on each side
 
 interface NewsItem {
   id: string;
