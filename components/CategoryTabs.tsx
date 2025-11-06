@@ -1,31 +1,30 @@
 import { supabase } from '@/lib/supabase';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from 'react-native-reanimated';
 import { NavigationState, SceneRendererProps, TabBar, TabView } from 'react-native-tab-view';
 import { VerticalNewsCarousel } from './VerticalNewsCarousel';
 
 type RouteType = { key: string; title: string };
 
-// ✅ Fixed: Memoized animated label component
-const AnimatedTabLabel = React.memo(({ 
-  route, 
-  focused, 
+const AnimatedTabLabel = React.memo(({
+  route,
+  focused,
   color,
-  onPress 
-}: { 
-  route: RouteType; 
-  focused: boolean; 
+  onPress
+}: {
+  route: RouteType;
+  focused: boolean;
   color: string;
   onPress: () => void;
 }) => {
@@ -33,15 +32,15 @@ const AnimatedTabLabel = React.memo(({
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withSpring(scale.value, {
-      damping: 10,
-      stiffness: 150,
+      damping: 12,
+      stiffness: 180,
     }) }],
   }));
 
   return (
     <Pressable
       onPressIn={() => {
-        scale.value = 0.95;
+        scale.value = 0.93;
       }}
       onPressOut={() => {
         scale.value = 1;
@@ -75,7 +74,6 @@ export function CategoryTabs() {
   const [routes, setRoutes] = useState<RouteType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch categories from Supabase
   useEffect(() => {
     const fetchCategories = async () => {
       const { data, error } = await supabase
@@ -97,14 +95,12 @@ export function CategoryTabs() {
     fetchCategories();
   }, []);
 
-  // ✅ Memoized render scene to prevent unnecessary re-renders
   const renderScene = useMemo(() => {
     return ({ route }: { route: RouteType }) => {
       return <VerticalNewsCarousel category={route.title} />;
     };
   }, []);
 
-  // ✅ Memoized TabBar to prevent unnecessary re-renders
   const renderTabBar = useMemo(() => {
     return (props: SceneRendererProps & { navigationState: NavigationState<RouteType> }) => (
       <View style={styles.tabBarContainer}>
@@ -115,15 +111,8 @@ export function CategoryTabs() {
           scrollEnabled
           tabStyle={styles.tab}
           activeColor="#FFFFFF"
-          inactiveColor="#9CA3AF"
-          renderLabel={({ route, focused, color }: { route: RouteType; focused: boolean; color: string }) => (
-            <AnimatedTabLabel
-              route={route}
-              focused={focused}
-              color={color}
-              onPress={() => props.jumpTo(route.key)}
-            />
-          )}
+          inactiveColor="#6B7280"
+        
         />
       </View>
     );
@@ -162,58 +151,60 @@ export function CategoryTabs() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#000000' 
+  container: {
+    flex: 1,
+    backgroundColor: '#0A0A0A'
   },
-  loadingContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#000000' 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0A0A0A'
   },
-  loadingText: { 
-    color: '#ffffff', 
-    fontSize: 16 
+  loadingText: {
+    color: '#E5E7EB',
+    fontSize: 16,
+    fontWeight: '500',
   },
-  tabBarContainer: { 
-    backgroundColor: '#000000', 
-    paddingHorizontal: 10, 
-    paddingTop: 20, 
-    paddingBottom: 10 
+  tabBarContainer: {
+    backgroundColor: '#0A0A0A',
+    paddingHorizontal: 12,
+    paddingTop: 24,
+    paddingBottom: 12,
   },
-  tabBar: { 
-    backgroundColor: '#000000', 
+  tabBar: {
+    backgroundColor: 'transparent',
     elevation: 0,
     shadowOpacity: 0,
   },
-  indicator: { 
-    backgroundColor: '#FF0000', 
-    height: 3, 
-    borderRadius: 2
+  indicator: {
+    backgroundColor: '#0EA5E9',
+    height: 3,
+    borderRadius: 2,
   },
-  tab: { 
+  tab: {
     width: 'auto',
-    minWidth: 80 
+    minWidth: 70,
   },
-  labelContainer: { 
-    paddingHorizontal: 20, 
-    paddingVertical: 12, 
-    borderRadius: 12, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  labelContainer: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
   },
-  activeLabelContainer: { 
-    backgroundColor: '#FF2D55' 
+  activeLabelContainer: {
+    backgroundColor: '#0EA5E9',
   },
-  tabLabel: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    color: '#FFFFFF' 
+  tabLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6B7280',
   },
-  activeTabLabel: { 
-    fontWeight: '800', 
-    fontSize: 16, 
-    color: '#FFFFFF' 
+  activeTabLabel: {
+    fontWeight: '700',
+    fontSize: 15,
+    color: '#FFFFFF',
   },
 });

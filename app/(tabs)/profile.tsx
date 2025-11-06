@@ -1,19 +1,20 @@
+import { router } from 'expo-router'; // ✅ Added
 import { Bookmark, ChevronRight, Clock, CreditCard as Edit3, Settings, User } from 'lucide-react-native';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -32,29 +33,23 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.value }],
-      opacity: opacity.value,
-    };
-  });
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.98);
-    opacity.value = withTiming(0.8, { duration: 100 });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-    opacity.value = withTiming(1, { duration: 100 });
-  };
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
 
   return (
     <AnimatedTouchableOpacity
       style={[styles.menuItem, animatedStyle]}
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      onPressIn={() => {
+        scale.value = withSpring(0.98);
+        opacity.value = withTiming(0.8, { duration: 100 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1);
+        opacity.value = withTiming(1, { duration: 100 });
+      }}
       activeOpacity={1}
     >
       <View style={styles.menuItemLeft}>
@@ -69,35 +64,15 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
   );
 }
 
-export default function ProfileTab() {
+export default function ProfileTab() {   // ✅ Removed navigation prop
   const profileImageScale = useSharedValue(1);
 
-  const profileImageStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: profileImageScale.value }],
-    };
-  });
-
-  const handleProfileImagePress = () => {
-    profileImageScale.value = withSpring(0.95, {}, () => {
-      profileImageScale.value = withSpring(1);
-    });
-  };
-
-  const handleEditProfile = () => {
-    console.log('Edit profile pressed');
-  };
-
-  const handleSavedArticles = () => {
-    console.log('Saved articles pressed');
-  };
-
-  const handleReadingHistory = () => {
-    console.log('Reading history pressed');
-  };
+  const profileImageStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: profileImageScale.value }],
+  }));
 
   const handlePreferences = () => {
-    console.log('Preferences pressed');
+    router.push('/news-customization');  // ✅ Updated navigation
   };
 
   return (
@@ -107,19 +82,19 @@ export default function ProfileTab() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-      
-
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <AnimatedTouchableOpacity
             style={[styles.profileImageContainer, profileImageStyle]}
-            onPress={handleProfileImagePress}
+            onPress={() => {
+              profileImageScale.value = withSpring(0.95, {}, () => {
+                profileImageScale.value = withSpring(1);
+              });
+            }}
             activeOpacity={0.8}
           >
             <Image
-              source={{
-                uri: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2',
-              }}
+              source={{ uri: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2' }}
               style={styles.profileImage}
             />
             <View style={styles.profileImageOverlay}>
@@ -132,59 +107,40 @@ export default function ProfileTab() {
             <Text style={styles.userEmail}>sarah.johnson@example.com</Text>
           </View>
 
-          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+          <TouchableOpacity style={styles.editButton}>
             <Edit3 size={16} color="#FF6B35" strokeWidth={2} />
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Menu Items */}
+        {/* Menu */}
         <View style={styles.menuSection}>
           <MenuItem
             icon={<Bookmark size={22} color="#FF6B35" strokeWidth={2} />}
             title="Saved Articles"
             subtitle="Articles you've bookmarked"
-            onPress={handleSavedArticles}
+            onPress={() => console.log('Saved articles pressed')}
           />
 
           <MenuItem
             icon={<Clock size={22} color="#FF6B35" strokeWidth={2} />}
             title="Reading History"
             subtitle="Your recently read articles"
-            onPress={handleReadingHistory}
+            onPress={() => console.log('Reading history pressed')}
           />
 
           <MenuItem
             icon={<Settings size={22} color="#FF6B35" strokeWidth={2} />}
             title="Preferences"
             subtitle="Customize your news experience"
-            onPress={handlePreferences}
+            onPress={handlePreferences}   // ✅ Works now
           />
-        </View>
-
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>127</Text>
-              <Text style={styles.statLabel}>Articles Read</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>23</Text>
-              <Text style={styles.statLabel}>Saved</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>45</Text>
-              <Text style={styles.statLabel}>Days Active</Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -196,19 +152,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1F2937',
-    textAlign: 'center',
   },
   profileSection: {
     backgroundColor: '#FFFFFF',
@@ -335,7 +278,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   statsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF93',
     flexDirection: 'row',
     paddingVertical: 24,
     paddingHorizontal: 20,
