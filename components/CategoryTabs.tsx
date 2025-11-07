@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import React, { useEffect, useMemo, useState } from 'react';
+
+
 import {
   Pressable,
   StyleSheet,
@@ -12,7 +14,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { NavigationState, SceneRendererProps, TabBar, TabView } from 'react-native-tab-view';
+import { NavigationState, SceneRendererProps, TabBar, TabBarProps, TabView } from 'react-native-tab-view';
 import { VerticalNewsCarousel } from './VerticalNewsCarousel';
 
 type RouteType = { key: string; title: string };
@@ -89,30 +91,34 @@ export function CategoryTabs() {
     );
   }, []);
 
-  const renderTabBar = useMemo(() => {
-    return (props: SceneRendererProps & { navigationState: NavigationState<RouteType> }) => (
-      <View style={styles.tabBarWrapper}>
-        <TabBar
-          {...props}
-          scrollEnabled
-          indicatorStyle={{ height: 0 }} // no underline indicator
-          style={styles.tabBar}
-          tabStyle={styles.tab}
-          renderLabel={({ route, focused }) => (
-            <AnimatedTabLabel
-              route={route}
-              focused={focused}
-              color={focused ? '#FFFFFF' : '#9CA3AF'}
-              onPress={() => {
-                const newIndex = props.navigationState.routes.findIndex(r => r.key === route.key);
-                setIndex(newIndex);
-              }}
+      const renderTabBar = useMemo(() => {
+        return (props: TabBarProps<RouteType>) => (
+          <View style={styles.tabBarWrapper}>
+            <TabBar
+              {...props}
+              scrollEnabled
+              indicatorStyle={{ height: 0 }}
+              style={styles.tabBar}
+              tabStyle={styles.tab}
+              // @ts-expect-error: renderLabel is not part of TabBarProps type but is supported at runtime
+              renderLabel={(props: {
+                navigationState: any; route: RouteType; focused: boolean 
+}) => (
+                <AnimatedTabLabel
+                  route={props.route}
+                  focused={props.focused}
+                  color={props.focused ? '#FFFFFF' : '#9CA3AF'}
+                  onPress={() => {
+                    const newIndex = props.navigationState.routes.findIndex((r: { key: () => ArrayIterator<number>; }) => r.key === routes.keys);
+                    setIndex(newIndex);
+                  }}
+                />
+              )}
             />
-          )}
-        />
-      </View>
-    );
-  }, []);
+          </View>
+        );
+      }, [setIndex]);
+      
 
   if (loading) {
     return (

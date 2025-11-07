@@ -1,7 +1,14 @@
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Image, Animated as RNAnimated, StyleSheet, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 import PagerView from 'react-native-pager-view';
 import Animated, {
   Extrapolate,
@@ -13,7 +20,7 @@ import Animated, {
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.90;
-const CARD_WIDTH = SCREEN_WIDTH - 5; // 16px padding on each side
+const CARD_WIDTH = SCREEN_WIDTH - 5;
 
 interface NewsItem {
   id: string;
@@ -30,52 +37,32 @@ interface VerticalNewsCarouselProps {
 
 export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
   const [articles, setArticles] = useState<NewsItem[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const pagerRef = useRef<PagerView>(null);
   const activeIndex = useSharedValue(0);
 
-  // Shimmer animation for skeleton
-  const shimmerAnim = useRef(new RNAnimated.Value(0)).current;
-
   useEffect(() => {
     const fetchNews = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('news')
         .select('*')
         .eq('category', category)
         .eq('is_published', true)
         .order('published_at', { ascending: false });
 
-      if (!error && data) {
-        setArticles(data);
-      }
+      if (data) setArticles(data);
       setLoading(false);
     };
 
     fetchNews();
   }, [category]);
 
-  useEffect(() => {
-    if (loading) {
-      RNAnimated.loop(
-        RNAnimated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        })
-      ).start();
-    }
-  }, [loading, shimmerAnim]);
-
   const formatDate = (dateString: string) => {
-    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     });
   };
 
@@ -84,26 +71,19 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
       const scale = interpolate(
         activeIndex.value,
         [index - 1, index, index + 1],
-        [0.92, 1, 0.92],
+        [0.94, 1, 0.94],
         Extrapolate.CLAMP
       );
 
       const opacity = interpolate(
         activeIndex.value,
         [index - 1, index, index + 1],
-        [0.6, 1, 0.6],
-        Extrapolate.CLAMP
-      );
-
-      const translateY = interpolate(
-        activeIndex.value,
-        [index - 1, index, index + 1],
-        [20, 0, -20],
+        [0.65, 1, 0.65],
         Extrapolate.CLAMP
       );
 
       return {
-        transform: [{ scale }, { translateY }],
+        transform: [{ scale }],
         opacity,
       };
     });
@@ -111,27 +91,20 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
         <View style={styles.card}>
-          {article.image_url ? (
-            <>
-              <Image
-                source={{ uri: article.image_url }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
-                style={styles.imageGradient}
-                locations={[0, 0.5, 1]}
-              />
-            </>
-          ) : (
-            <View style={styles.placeholderImage}>
-              <LinearGradient
-                colors={['#1F2937', '#111827']}
-                style={StyleSheet.absoluteFill}
-              />
-            </View>
-          )}
+        {article?.image_url && (
+  <>
+    <Image
+      source={{ uri: article.image_url }}
+      style={styles.image}
+      resizeMode="cover"
+    />
+    <LinearGradient
+      colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
+      style={styles.imageGradient}
+    />
+  </>
+)}
+
 
           <View style={styles.content}>
             <View style={styles.categoryBadge}>
@@ -157,105 +130,21 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     );
   };
 
-  // Skeleton Card Component
-  const SkeletonCard = () => {
-    const shimmerTranslate = shimmerAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [-CARD_WIDTH, CARD_WIDTH],
-    });
-
-    return (
-      <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
-        <View style={styles.card}>
-          {/* Image Skeleton */}
-          <View style={styles.skeletonImage}>
-            <RNAnimated.View
-              style={[
-                styles.shimmer,
-                { transform: [{ translateX: shimmerTranslate }] },
-              ]}
-            />
-          </View>
-
-          <View style={styles.content}>
-            {/* Category Badge Skeleton */}
-            <View style={styles.skeletonBadge} />
-
-            {/* Title Lines */}
-            {[...Array(3)].map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.skeletonLine,
-                  i === 0 ? styles.skeletonTitle1 : i === 1 ? styles.skeletonTitle2 : styles.skeletonTitle3,
-                ]}
-              >
-                <RNAnimated.View style={styles.shimmer} />
-              </View>
-            ))}
-
-            <View style={styles.divider} />
-
-            {/* Description Lines */}
-            {[...Array(4)].map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.skeletonLine,
-                  styles.skeletonDescription,
-                  i === 3 && { width: '60%' },
-                ]}
-              >
-                <RNAnimated.View style={styles.shimmer} />
-              </View>
-            ))}
-
-            {/* Date Skeleton */}
-            <View style={styles.skeletonFooter}>
-              <View style={styles.skeletonDate}>
-                <RNAnimated.View style={styles.shimmer} />
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.page}>
-          <SkeletonCard />
-        </View>
-      </View>
-    );
-  }
-
-  if (articles.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No articles found</Text>
-        <Text style={styles.emptySubtext}>Check back later for updates</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <PagerView
         ref={pagerRef}
         style={styles.pager}
         orientation="vertical"
+        overScrollMode="never"
+        pageMargin={Platform.OS === 'ios' ? 10 : 16}
+        offscreenPageLimit={2}
         onPageSelected={(e) => {
-          const newIndex = e.nativeEvent.position;
-          setCurrentIndex(newIndex);
-          activeIndex.value = withSpring(newIndex, {
-            damping: 20,
-            stiffness: 120,
+          activeIndex.value = withSpring(e.nativeEvent.position, {
+            damping: 18,
+            stiffness: 90,
           });
         }}
-        scrollEnabled
       >
         {articles.map((article, index) => (
           <View key={article.id} style={styles.page}>
@@ -263,175 +152,56 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
           </View>
         ))}
       </PagerView>
-
-    
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0A0A',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyText: {
-    color: '#E5E7EB',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    color: '#6B7280',
-    fontSize: 14,
-  },
-  pager: {
-    flex: 1,
-  },
-  page: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
+  container: { flex: 1, backgroundColor: '#0A0A0A' },
+  pager: { flex: 1 },
+  page: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
   cardContainer: {
     width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 2,
+    height: CARD_HEIGHT * 0.96,
+    justifyContent: 'center',
   },
+
   card: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 26,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#111418',
   },
-  // === Real Card Styles ===
+
   image: {
     width: '100%',
-    height: '45%',
-    backgroundColor: '#1F2937',
+    height: '50%',
   },
-  placeholderImage: {
-    width: '100%',
-    height: '45%',
-  },
+
   imageGradient: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '45%',
+    bottom: 0,
+    width: '100%',
+    height: '55%',
   },
-  content: {
-    flex: 1,
-    padding: 30,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'flex-start',
-  },
+
+  content: { flex: 1, padding: 22 },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#0EA5E9',
+    backgroundColor: 'rgba(14,165,233,0.25)',
+    borderWidth: 1,
+    borderColor: '#0EA5E9',
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    marginBottom: 20,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginBottom: 14,
   },
-  categoryText: {
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: 1.2,
-  },
-  headline: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 16,
-    lineHeight: 34,
-    letterSpacing: -0.5,
-  },
-  divider: {
-    width: 40,
-    height: 3,
-    backgroundColor: '#0EA5E9',
-    borderRadius: 2,
-    marginBottom: 16,
-  },
-  description: {
-    fontSize: 16,
-    color: '#4B5563',
-    lineHeight: 26,
-    marginBottom: 12,
-    fontWeight: '400',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 16,
-    marginTop: 'auto',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  date: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '500',
-  },
- 
-  // === Skeleton Styles ===
-  skeletonImage: {
-    width: '100%',
-    height: '45%',
-    backgroundColor: '#E5E7EB',
-    overflow: 'hidden',
-  },
-  skeletonBadge: {
-    width: 80,
-    height: 28,
-    borderRadius: 20,
-    backgroundColor: '#E5E7EB',
-    marginBottom: 20,
-    alignSelf: 'flex-start',
-  },
-  skeletonLine: {
-    height: 20,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  skeletonTitle1: { width: '95%' },
-  skeletonTitle2: { width: '85%' },
-  skeletonTitle3: { width: '70%' },
-  skeletonDescription: {
-    height: 16,
-    marginBottom: 8,
-  },
-  skeletonFooter: {
-    marginTop: 'auto',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  skeletonDate: {
-    width: 100,
-    height: 16,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-  },
-  shimmer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    width: '50%',
-  },
+  categoryText: { color: '#0EA5E9', fontWeight: '700', fontSize: 12, letterSpacing: 1 },
+
+  headline: { fontSize: 24, fontWeight: '800', color: '#F9FAFB', marginBottom: 12 },
+  divider: { width: 50, height: 3, backgroundColor: '#0EA5E9', borderRadius: 2, marginBottom: 14 },
+  description: { fontSize: 15.5, color: '#D1D5DB', lineHeight: 25 },
+  footer: { marginTop: 'auto', paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  date: { color: '#9CA3AF', fontSize: 13 },
 });
