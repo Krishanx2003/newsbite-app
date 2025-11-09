@@ -44,12 +44,20 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
 
   useEffect(() => {
     const fetchNews = async () => {
-      const { data } = await supabase
+      setLoading(true);
+
+      let query = supabase
         .from('news')
         .select('*')
-        .eq('category', category)
         .eq('is_published', true)
         .order('published_at', { ascending: false });
+
+      // ✅ MY FEED: load all news
+      if (category !== 'all') {
+        query = query.eq('category', category);
+      }
+
+      const { data } = await query;
 
       if (data) setArticles(data);
       setLoading(false);
@@ -91,24 +99,26 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
         <View style={styles.card}>
-        {article?.image_url && (
-  <>
-    <Image
-      source={{ uri: article.image_url }}
-      style={styles.image}
-      resizeMode="cover"
-    />
-    <LinearGradient
-      colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
-      style={styles.imageGradient}
-    />
-  </>
-)}
-
+          
+          {article?.image_url && (
+            <>
+              <Image
+                source={{ uri: article.image_url }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
+                style={styles.imageGradient}
+              />
+            </>
+          )}
 
           <View style={styles.content}>
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{article.category.toUpperCase()}</Text>
+              <Text style={styles.categoryText}>
+                {article.category.toUpperCase()}
+              </Text>
             </View>
 
             <Text style={styles.headline} numberOfLines={4}>
@@ -132,32 +142,60 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
 
   return (
     <View style={styles.container}>
-      <PagerView
-        ref={pagerRef}
-        style={styles.pager}
-        orientation="vertical"
-        overScrollMode="never"
-        pageMargin={Platform.OS === 'ios' ? 10 : 16}
-        offscreenPageLimit={2}
-        onPageSelected={(e) => {
-          activeIndex.value = withSpring(e.nativeEvent.position, {
-            damping: 18,
-            stiffness: 90,
-          });
-        }}
-      >
-        {articles.map((article, index) => (
-          <View key={article.id} style={styles.page}>
-            <NewsCard article={article} index={index} />
-          </View>
-        ))}
-      </PagerView>
+      {/* ✅ Loading State */}
+      {loading && (
+        <View style={styles.loaderContainer}>
+          <Text style={styles.loaderText}>Loading...</Text>
+        </View>
+      )}
+
+      {/* ✅ Empty State */}
+      {!loading && articles.length === 0 && (
+        <View style={styles.loaderContainer}>
+          <Text style={styles.loaderText}>No articles found</Text>
+        </View>
+      )}
+
+      {!loading && articles.length > 0 && (
+        <PagerView
+          ref={pagerRef}
+          style={styles.pager}
+          orientation="vertical"
+          overScrollMode="never"
+          pageMargin={Platform.OS === 'ios' ? 10 : 16}
+          offscreenPageLimit={2}
+          onPageSelected={(e) => {
+            activeIndex.value = withSpring(e.nativeEvent.position, {
+              damping: 18,
+              stiffness: 90,
+            });
+          }}
+        >
+          {articles.map((article, index) => (
+            <View key={article.id} style={styles.page}>
+              <NewsCard article={article} index={index} />
+            </View>
+          ))}
+        </PagerView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0A' },
+
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderText: {
+    color: '#9CA3AF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
   pager: { flex: 1 },
   page: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -187,6 +225,7 @@ const styles = StyleSheet.create({
   },
 
   content: { flex: 1, padding: 22 },
+
   categoryBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(14,165,233,0.25)',
@@ -197,11 +236,41 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 14,
   },
-  categoryText: { color: '#0EA5E9', fontWeight: '700', fontSize: 12, letterSpacing: 1 },
 
-  headline: { fontSize: 24, fontWeight: '800', color: '#F9FAFB', marginBottom: 12 },
-  divider: { width: 50, height: 3, backgroundColor: '#0EA5E9', borderRadius: 2, marginBottom: 14 },
-  description: { fontSize: 15.5, color: '#D1D5DB', lineHeight: 25 },
-  footer: { marginTop: 'auto', paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  categoryText: {
+    color: '#0EA5E9',
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+
+  headline: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#F9FAFB',
+    marginBottom: 12,
+  },
+
+  divider: {
+    width: 50,
+    height: 3,
+    backgroundColor: '#0EA5E9',
+    borderRadius: 2,
+    marginBottom: 14,
+  },
+
+  description: {
+    fontSize: 15.5,
+    color: '#D1D5DB',
+    lineHeight: 25,
+  },
+
+  footer: {
+    marginTop: 'auto',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+
   date: { color: '#9CA3AF', fontSize: 13 },
 });

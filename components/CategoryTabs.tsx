@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import React, { useEffect, useMemo, useState } from 'react';
 
-
 import {
   Pressable,
   StyleSheet,
@@ -9,53 +8,65 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { NavigationState, SceneRendererProps, TabBar, TabBarProps, TabView } from 'react-native-tab-view';
+
+import {
+  TabBar,
+  TabView
+} from 'react-native-tab-view';
+
 import { VerticalNewsCarousel } from './VerticalNewsCarousel';
 
 type RouteType = { key: string; title: string };
 
-const AnimatedTabLabel = React.memo(({
-  route,
-  focused,
-  color,
-  onPress
-}: {
-  route: RouteType;
-  focused: boolean;
-  color: string;
-  onPress: () => void;
-}) => {
-  const scale = useSharedValue(1);
+const AnimatedTabLabel = React.memo(
+  ({
+    route,
+    focused,
+    color,
+    onPress,
+  }: {
+    route: RouteType;
+    focused: boolean;
+    color: string;
+    onPress: () => void;
+  }) => {
+    const scale = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: withSpring(scale.value, { damping: 12, stiffness: 180 }) }],
-  }));
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [
+        {
+          scale: withSpring(scale.value, {
+            damping: 12,
+            stiffness: 180,
+          }),
+        },
+      ],
+    }));
 
-  return (
-    <Pressable
-      onPressIn={() => (scale.value = 0.93)}
-      onPressOut={() => {
-        scale.value = 1;
-        onPress();
-      }}
-      style={[
-        styles.labelContainer,
-        focused && styles.activeLabelContainer,
-      ]}
-    >
-      <Animated.View style={animatedStyle}>
-        <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
-          {route.title}
-        </Text>
-      </Animated.View>
-    </Pressable>
-  );
-});
+    return (
+      <Pressable
+        onPressIn={() => (scale.value = 0.93)}
+        onPressOut={() => {
+          scale.value = 1;
+          onPress();
+        }}
+        style={[styles.labelContainer, focused && styles.activeLabelContainer]}
+      >
+        <Animated.View style={animatedStyle}>
+          <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
+            {route.title}
+          </Text>
+        </Animated.View>
+      </Pressable>
+    );
+  }
+);
 
 AnimatedTabLabel.displayName = 'AnimatedTabLabel';
 
@@ -73,52 +84,65 @@ export function CategoryTabs() {
         .order('created_at', { ascending: true });
 
       if (!error && data) {
-        setRoutes(
-          data.map((c) => ({
-            key: c.name.toLowerCase().replace(/\s+/g, '-'),
-            title: c.name,
-          }))
-        );
+        const fetchedRoutes = data.map((c) => ({
+          key: c.name.toLowerCase().replace(/\s+/g, '-'),
+          title: c.name,
+        }));
+
+        // ✅ Add My Feed as default first tab
+        setRoutes([{ key: 'my-feed', title: 'My Feed' }, ...fetchedRoutes]);
       }
       setLoading(false);
     };
+
     fetchCategories();
   }, []);
 
+  // ✅ Load ALL news in My Feed
   const renderScene = useMemo(() => {
-    return ({ route }: { route: RouteType }) => (
-      <VerticalNewsCarousel category={route.title} />
-    );
+    return ({ route }: { route: RouteType }) => {
+      if (route.key === 'my-feed') {
+        return <VerticalNewsCarousel category="all" />;
+      }
+      return <VerticalNewsCarousel category={route.title} />;
+    };
   }, []);
 
-      const renderTabBar = useMemo(() => {
-        return (props: TabBarProps<RouteType>) => (
-          <View style={styles.tabBarWrapper}>
-            <TabBar
-              {...props}
-              scrollEnabled
-              indicatorStyle={{ height: 0 }}
-              style={styles.tabBar}
-              tabStyle={styles.tab}
-              // @ts-expect-error: renderLabel is not part of TabBarProps type but is supported at runtime
-              renderLabel={(props: {
-                navigationState: any; route: RouteType; focused: boolean 
-}) => (
-                <AnimatedTabLabel
-                  route={props.route}
-                  focused={props.focused}
-                  color={props.focused ? '#FFFFFF' : '#9CA3AF'}
-                  onPress={() => {
-                    const newIndex = props.navigationState.routes.findIndex((r: { key: () => ArrayIterator<number>; }) => r.key === routes.keys);
-                    setIndex(newIndex);
-                  }}
-                />
-              )}
+  // ✅ Fixed tab press logic
+  const renderTabBar = useMemo(() => {
+    return (props: any) => (
+      <View style={styles.tabBarWrapper}>
+        <TabBar
+          {...props}
+          scrollEnabled
+          indicatorStyle={{ height: 0 }}
+          style={styles.tabBar}
+          tabStyle={styles.tab}
+  
+          // ✅ Fix TypeScript error (TS doesn't know renderLabel exists)
+          // @ts-ignore
+          renderLabel={(labelProps: {
+            route: RouteType;
+            focused: boolean;
+            color: string;
+          }) => (
+            <AnimatedTabLabel
+              route={labelProps.route}
+              focused={labelProps.focused}
+              color={labelProps.focused ? '#FFFFFF' : '#9CA3AF'}
+              onPress={() => {
+                const newIndex = props.navigationState.routes.findIndex(
+                  (r: RouteType) => r.key === labelProps.route.key
+                );
+                setIndex(newIndex);
+              }}
             />
-          </View>
-        );
-      }, [setIndex]);
-      
+          )}
+        />
+      </View>
+    );
+  }, [routes]);
+  
 
   if (loading) {
     return (
@@ -164,6 +188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#0B0B0B',
   },
+
   loadingText: {
     color: '#D1D5DB',
     fontSize: 16,
