@@ -1,24 +1,21 @@
 {
   "expo": {
     "name": "Newsbite",
-    "slug": "newsbite",
+    "slug": "newsbite-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/newsbite-logo.png",
     "scheme": "newsbiteapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "splash": {
       "image": "./assets/images/newsbite-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
       "package": "com.krishanx20033.newsbiteapp",
       "adaptiveIcon": {
@@ -26,16 +23,17 @@
         "backgroundColor": "#ffffff"
       }
     },
-
     "web": {
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
-
     "extra": {
       "eas": {
         "projectId": "1927a153-030d-4c8b-a7b3-6c943a0438c7"
       }
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

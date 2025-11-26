@@ -1,9 +1,17 @@
-import { router } from 'expo-router'; // ✅ Added
-import { Bookmark, ChevronRight, Clock, CreditCard as Edit3, Settings, User } from 'lucide-react-native';
+import { router } from 'expo-router';
+import {
+  Bookmark,
+  ChevronRight,
+  Clock,
+  FileText,
+  MessageSquare,
+  Settings,
+  Share2,
+  Shield,
+  Star,
+} from 'lucide-react-native';
 import React from 'react';
 import {
-  Dimensions,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,8 +26,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const { width: screenWidth } = Dimensions.get('window');
-
 interface MenuItemProps {
   icon: React.ReactNode;
   title: string;
@@ -27,7 +33,8 @@ interface MenuItemProps {
   onPress: () => void;
 }
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity =
+  Animated.createAnimatedComponent(TouchableOpacity);
 
 function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
   const scale = useSharedValue(1);
@@ -43,15 +50,14 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
       style={[styles.menuItem, animatedStyle]}
       onPress={onPress}
       onPressIn={() => {
-        scale.value = withSpring(0.98);
-        opacity.value = withTiming(0.8, { duration: 100 });
+        scale.value = withSpring(0.97);
+        opacity.value = withTiming(0.7, { duration: 100 });
       }}
       onPressOut={() => {
         scale.value = withSpring(1);
         opacity.value = withTiming(1, { duration: 100 });
       }}
-      activeOpacity={1}
-    >
+      activeOpacity={1}>
       <View style={styles.menuItemLeft}>
         <View style={styles.iconContainer}>{icon}</View>
         <View style={styles.menuItemContent}>
@@ -64,83 +70,115 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
   );
 }
 
-export default function ProfileTab() {   // ✅ Removed navigation prop
-  const profileImageScale = useSharedValue(1);
-
-  const profileImageStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: profileImageScale.value }],
-  }));
-
+export default function ProfileTab() {
   const handlePreferences = () => {
-    router.push('/news-customization');  // ✅ Updated navigation
+    router.push('/news-customization');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <AnimatedTouchableOpacity
-            style={[styles.profileImageContainer, profileImageStyle]}
-            onPress={() => {
-              profileImageScale.value = withSpring(0.95, {}, () => {
-                profileImageScale.value = withSpring(1);
-              });
-            }}
-            activeOpacity={0.8}
-          >
-            <Image
-              source={{ uri: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2' }}
-              style={styles.profileImage}
-            />
-            <View style={styles.profileImageOverlay}>
-              <User size={16} color="#FFFFFF" strokeWidth={2} />
-            </View>
-          </AnimatedTouchableOpacity>
-
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>Sarah Johnson</Text>
-            <Text style={styles.userEmail}>sarah.johnson@example.com</Text>
-          </View>
-
-          <TouchableOpacity style={styles.editButton}>
-            <Edit3 size={16} color="#FF6B35" strokeWidth={2} />
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
+        contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerSubtitle}>
+            Manage your account and preferences
+          </Text>
         </View>
 
-        {/* Menu */}
-        <View style={styles.menuSection}>
-          <MenuItem
-            icon={<Bookmark size={22} color="#FF6B35" strokeWidth={2} />}
-            title="Saved Articles"
-            subtitle="Articles you've bookmarked"
-            onPress={() => console.log('Saved articles pressed')}
-          />
+        {/* Menu Section: Your Content */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Your Content</Text>
+          <View style={styles.menuSection}>
+            <MenuItem
+              icon={<Bookmark size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Saved Articles"
+              subtitle="Articles you've bookmarked"
+              onPress={() => console.log('Saved articles pressed')}
+            />
 
-          <MenuItem
-            icon={<Clock size={22} color="#FF6B35" strokeWidth={2} />}
-            title="Reading History"
-            subtitle="Your recently read articles"
-            onPress={() => console.log('Reading history pressed')}
-          />
+            <MenuItem
+              icon={<Clock size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Reading History"
+              subtitle="Your recently read articles"
+              onPress={() => console.log('Reading history pressed')}
+            />
+          </View>
+        </View>
 
-          <MenuItem
-            icon={<Settings size={22} color="#FF6B35" strokeWidth={2} />}
-            title="Preferences"
-            subtitle="Customize your news experience"
-            onPress={handlePreferences}   // ✅ Works now
-          />
+        {/* Menu Section: App Settings */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>App Settings</Text>
+          <View style={styles.menuSection}>
+            <MenuItem
+              icon={<Settings size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Preferences"
+              subtitle="Customize your news experience"
+              onPress={handlePreferences}
+            />
+          </View>
+        </View>
+
+        {/* Menu Section: Support */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Support</Text>
+          <View style={styles.menuSection}>
+            <MenuItem
+              icon={<Share2 size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Share this App"
+              subtitle="Invite friends to try the app"
+              onPress={() => console.log('Share app')}
+            />
+
+            <MenuItem
+              icon={<Star size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Rate this App"
+              subtitle="Tell us what you think"
+              onPress={() => console.log('Rate app')}
+            />
+
+            <MenuItem
+              icon={
+                <MessageSquare size={22} color="#FF6B35" strokeWidth={2} />
+              }
+              title="Send Feedback"
+              subtitle="Help us improve the app"
+              onPress={() => console.log('Feedback pressed')}
+            />
+          </View>
+        </View>
+
+        {/* Menu Section: Legal */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Legal</Text>
+          <View style={styles.menuSection}>
+            <MenuItem
+              icon={<FileText size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Terms & Conditions"
+              subtitle="Read our terms of service"
+              onPress={() => router.push('/terms')}
+            />
+
+            <MenuItem
+              icon={<Shield size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Privacy Policy"
+              subtitle="How we protect your data"
+              onPress={() => router.push('/privacy')}
+            />
+          </View>
+        </View>
+
+        {/* App Version */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -151,82 +189,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
-  profileSection: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 32,
+  header: {
     paddingHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 8,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    paddingTop: 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  profileImageContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#FF6B35',
-  },
-  profileImageOverlay: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    backgroundColor: '#FF6B35',
-    borderRadius: 14,
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  userInfo: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '600',
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 4,
   },
-  userEmail: {
-    fontSize: 16,
+  headerSubtitle: {
+    fontSize: 15,
     color: '#6B7280',
   },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3F2',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FECACA',
+  sectionContainer: {
+    marginTop: 24,
   },
-  editButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FF6B35',
-    marginLeft: 6,
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: 20,
+    marginBottom: 12,
   },
   menuSection: {
-    marginTop: 16,
-    marginHorizontal: 16,
+    paddingHorizontal: 16,
   },
   menuItem: {
     backgroundColor: '#FFFFFF',
@@ -234,17 +230,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 8,
     borderRadius: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -252,13 +242,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FEF3F2',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   menuItemContent: {
     flex: 1,
@@ -273,46 +263,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-  statsSection: {
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-  statsContainer: {
-    backgroundColor: '#FFFFFF93',
-    flexDirection: 'row',
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-  },
-  statItem: {
-    flex: 1,
+  versionContainer: {
     alignItems: 'center',
+    marginTop: 32,
+    marginBottom: 16,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FF6B35',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statDivider: {
-    width: 1,
-    height: '100%',
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: 16,
+  versionText: {
+    fontSize: 13,
+    color: '#9CA3AF',
   },
 });
