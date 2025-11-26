@@ -4,8 +4,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import 'react-native-reanimated';
-import React from 'react';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { NotificationProvider } from '@/context/NotificationProvider';
 
 export const unstable_settings = {
