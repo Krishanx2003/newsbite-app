@@ -120,14 +120,14 @@ export default function ProfileTab() {
               icon={<Bookmark size={22} color="#FF6B35" strokeWidth={2} />}
               title="Saved Articles"
               subtitle="Articles you've bookmarked"
-              onPress={() => console.log('Saved articles pressed')}
+              onPress={() => { }}
             />
 
             <MenuItem
               icon={<Clock size={22} color="#FF6B35" strokeWidth={2} />}
               title="Reading History"
               subtitle="Your recently read articles"
-              onPress={() => console.log('Reading history pressed')}
+              onPress={() => { }}
             />
           </View>
         </View>
@@ -159,14 +159,14 @@ export default function ProfileTab() {
               icon={<Share2 size={22} color="#FF6B35" strokeWidth={2} />}
               title="Share this App"
               subtitle="Invite friends to try the app"
-              onPress={() => console.log('Share app')}
+              onPress={() => { }}
             />
 
             <MenuItem
               icon={<Star size={22} color="#FF6B35" strokeWidth={2} />}
               title="Rate this App"
               subtitle="Tell us what you think"
-              onPress={() => console.log('Rate app')}
+              onPress={() => { }}
             />
 
             <MenuItem
@@ -175,7 +175,7 @@ export default function ProfileTab() {
               }
               title="Send Feedback"
               subtitle="Help us improve the app"
-              onPress={() => console.log('Feedback pressed')}
+              onPress={() => { }}
             />
           </View>
         </View>

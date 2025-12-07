@@ -34,6 +34,7 @@ interface NewsArticle {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+  source?: string;
 }
 
 interface Category {
@@ -286,7 +287,7 @@ export default function SearchScreen() {
           style={styles.newsCard}
           activeOpacity={0.7}
           onPress={() => {
-            console.log('Article pressed:', item.title);
+            // Navigate to article details or open in browser
           }}
         >
           {item.image_url && (
@@ -310,9 +311,9 @@ export default function SearchScreen() {
             </Text>
             <View style={styles.newsFooter}>
               <Text style={styles.newsSource}>
-                {item.category || 'News'}
+                {item.category || 'News'} • {item.source || 'Newsbite'}
               </Text>
-              {/* Commenting out Dates */}
+              {/* Commenting Date */}
               {/* <Text style={styles.newsDate}>
                 {formatDate(item.published_at || item.created_at)}
               </Text> */}

@@ -1,12 +1,15 @@
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View
 } from 'react-native';
 
@@ -21,6 +24,7 @@ interface NewsItem {
     category: string;
     published_at: string;
     image_url: string | null;
+    source?: string;
 }
 
 interface VerticalNewsCarouselProps {
@@ -96,11 +100,27 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                         <Text style={styles.description} numberOfLines={6}>
                             {article.content}
                         </Text>
-                        
-                        {/* Commenting out Dates */}
-                        {/* <View style={styles.footer}>
-                            <Text style={styles.date}>{formatDate(article.published_at)}</Text>
-                        </View> */}
+
+                        <View style={styles.footer}>
+                            <View>
+                                <Text style={styles.source}>{article.source || 'Newsbite'}</Text>
+                                {/* Commenting Date */}
+                                {/* <Text style={styles.date}>{formatDate(article.published_at)}</Text> */}
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    if (Platform.OS === 'web') {
+                                        window.alert('Thank you. We have received your report and will review this content.');
+                                    } else {
+                                        // Fallback for non-web environments (though this file is web-specific)
+                                        console.log('Reported');
+                                    }
+                                }}
+                                style={styles.reportButton}
+                            >
+                                <TriangleAlert size={16} color="#EF4444" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -238,4 +258,10 @@ const styles = StyleSheet.create({
     },
 
     date: { color: '#9CA3AF', fontSize: 13 },
+    source: { color: '#0EA5E9', fontSize: 13, fontWeight: '600', marginBottom: 4 },
+    reportButton: {
+        padding: 8,
+        borderRadius: 20,
+        backgroundColor: '#FEF2F2',
+    },
 });
