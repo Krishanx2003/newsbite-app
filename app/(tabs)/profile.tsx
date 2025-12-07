@@ -4,14 +4,17 @@ import {
   ChevronRight,
   Clock,
   FileText,
+  Info,
   MessageSquare,
   Settings,
   Share2,
   Shield,
   Star,
+  Trash2
 } from 'lucide-react-native';
 import React from 'react';
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,12 +34,13 @@ interface MenuItemProps {
   title: string;
   subtitle: string;
   onPress: () => void;
+  isDestructive?: boolean;
 }
 
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
 
-function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
+function MenuItem({ icon, title, subtitle, onPress, isDestructive }: MenuItemProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
@@ -47,7 +51,7 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
 
   return (
     <AnimatedTouchableOpacity
-      style={[styles.menuItem, animatedStyle]}
+      style={[styles.menuItem, animatedStyle, isDestructive && styles.destructiveItem]}
       onPress={onPress}
       onPressIn={() => {
         scale.value = withSpring(0.97);
@@ -59,13 +63,13 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
       }}
       activeOpacity={1}>
       <View style={styles.menuItemLeft}>
-        <View style={styles.iconContainer}>{icon}</View>
+        <View style={[styles.iconContainer, isDestructive && styles.destructiveIconContainer]}>{icon}</View>
         <View style={styles.menuItemContent}>
-          <Text style={styles.menuItemTitle}>{title}</Text>
+          <Text style={[styles.menuItemTitle, isDestructive && styles.destructiveText]}>{title}</Text>
           <Text style={styles.menuItemSubtitle}>{subtitle}</Text>
         </View>
       </View>
-      <ChevronRight size={20} color="#9CA3AF" strokeWidth={2} />
+      <ChevronRight size={20} color={isDestructive ? "#EF4444" : "#9CA3AF"} strokeWidth={2} />
     </AnimatedTouchableOpacity>
   );
 }
@@ -73,6 +77,25 @@ function MenuItem({ icon, title, subtitle, onPress }: MenuItemProps) {
 export default function ProfileTab() {
   const handlePreferences = () => {
     router.push('/news-customization');
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            //! TODO
+            // Implement actual deletion logic here
+            Alert.alert('Account Deleted', 'Your account will be checked and deleted within 72 hours.');
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -118,6 +141,12 @@ export default function ProfileTab() {
               title="Preferences"
               subtitle="Customize your news experience"
               onPress={handlePreferences}
+            />
+            <MenuItem
+              icon={<Info size={22} color="#FF6B35" strokeWidth={2} />}
+              title="About Newsbite"
+              subtitle="Version, ownership, and mission"
+              onPress={() => router.push('/about')}
             />
           </View>
         </View>
@@ -171,9 +200,23 @@ export default function ProfileTab() {
           </View>
         </View>
 
+        {/* Menu Section: Danger Zone */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: '#EF4444' }]}>Danger Zone</Text>
+          <View style={styles.menuSection}>
+            <MenuItem
+              icon={<Trash2 size={22} color="#EF4444" strokeWidth={2} />}
+              title="Delete Account"
+              subtitle="Permanently remove your data"
+              onPress={handleDeleteAccount}
+              isDestructive
+            />
+          </View>
+        </View>
+
         {/* App Version */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
+          <Text style={styles.versionText}>Version 1.0.2</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -271,5 +314,15 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 13,
     color: '#9CA3AF',
+  },
+  destructiveItem: {
+    borderColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
+  },
+  destructiveIconContainer: {
+    backgroundColor: '#FEE2E2',
+  },
+  destructiveText: {
+    color: '#EF4444',
   },
 });
