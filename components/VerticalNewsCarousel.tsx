@@ -99,7 +99,7 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
         <View style={styles.card}>
-          
+
           {article?.image_url && (
             <>
               <Image
@@ -130,10 +130,10 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
             <Text style={styles.description} numberOfLines={6}>
               {article.content}
             </Text>
-
-            <View style={styles.footer}>
+            {/* Commenting out Dates */}
+            {/* <View style={styles.footer}>
               <Text style={styles.date}>{formatDate(article.published_at)}</Text>
-            </View>
+            </View> */}
           </View>
         </View>
       </Animated.View>

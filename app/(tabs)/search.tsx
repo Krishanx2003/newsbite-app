@@ -138,7 +138,7 @@ export default function SearchScreen() {
     const baseTabs = [
       { id: 'allnews', title: 'All News' },
     ];
-    
+
     const categoryTabs = categories.map(cat => ({
       id: cat.name.toLowerCase(),
       title: cat.name,
@@ -164,10 +164,10 @@ export default function SearchScreen() {
   // Filter articles based on search query and active tab
   const filteredArticles = useMemo(() => {
     let filtered = articles;
-    
+
     // Filter by tab/category
     if (activeTab !== 'allnews') {
-      filtered = filtered.filter(article => 
+      filtered = filtered.filter(article =>
         article.category?.toLowerCase() === activeTab.toLowerCase()
       );
     }
@@ -189,10 +189,10 @@ export default function SearchScreen() {
   // Highlight matching keywords
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
-    
+
     const regex = new RegExp(`(${query})`, 'gi');
     const parts = text.split(regex);
-    
+
     return parts.map((part, index) => {
       if (part.toLowerCase() === query.toLowerCase()) {
         return (
@@ -209,7 +209,7 @@ export default function SearchScreen() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       return 'Just now';
     } else if (diffInHours < 24) {
@@ -276,7 +276,7 @@ export default function SearchScreen() {
   const renderNewsCard = ({ item, index }: { item: NewsArticle; index: number }) => {
     // Extract first 150 characters as description
     const description = item.content.substring(0, 150) + '...';
-    
+
     return (
       <Animated.View
         entering={FadeIn.delay(index * 100).springify()}
@@ -290,10 +290,10 @@ export default function SearchScreen() {
           }}
         >
           {item.image_url && (
-            <Image 
-              source={{ uri: item.image_url }} 
+            <Image
+              source={{ uri: item.image_url }}
               style={styles.newsThumbnail}
-             
+
             />
           )}
           <View style={styles.newsContent}>
@@ -312,9 +312,10 @@ export default function SearchScreen() {
               <Text style={styles.newsSource}>
                 {item.category || 'News'}
               </Text>
-              <Text style={styles.newsDate}>
+              {/* Commenting out Dates */}
+              {/* <Text style={styles.newsDate}>
                 {formatDate(item.published_at || item.created_at)}
-              </Text>
+              </Text> */}
             </View>
           </View>
         </TouchableOpacity>
@@ -342,7 +343,7 @@ export default function SearchScreen() {
     >
       <Text style={styles.emptyTitle}>Something went wrong</Text>
       <Text style={styles.emptyDescription}>{error}</Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.retryButton}
         onPress={onRefresh}
       >
@@ -369,7 +370,7 @@ export default function SearchScreen() {
           <TouchableOpacity onPress={handleSearchPress} style={styles.searchIconContainer}>
             <Search size={20} color="#6B7280" />
           </TouchableOpacity>
-          
+
           <TextInput
             style={styles.searchInput}
             placeholder="Search news, topics…"
@@ -381,7 +382,7 @@ export default function SearchScreen() {
             returnKeyType="search"
             onSubmitEditing={() => Keyboard.dismiss()}
           />
-          
+
           {searchQuery.length > 0 && (
             <Animated.View entering={FadeIn} exiting={FadeOut}>
               <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
@@ -431,8 +432,8 @@ export default function SearchScreen() {
       </View>
 
       {/* Content */}
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -453,7 +454,7 @@ export default function SearchScreen() {
           ) : (
             !isSearching && renderEmptyState()
           )}
-          
+
           {isSearching && (
             <Animated.View entering={FadeIn} style={styles.loadingState}>
               <Text style={styles.loadingText}>Searching...</Text>

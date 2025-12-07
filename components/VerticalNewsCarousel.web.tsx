@@ -96,10 +96,11 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                         <Text style={styles.description} numberOfLines={6}>
                             {article.content}
                         </Text>
-
-                        <View style={styles.footer}>
+                        
+                        {/* Commenting out Dates */}
+                        {/* <View style={styles.footer}>
                             <Text style={styles.date}>{formatDate(article.published_at)}</Text>
-                        </View>
+                        </View> */}
                     </View>
                 </View>
             </View>
