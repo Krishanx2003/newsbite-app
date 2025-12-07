@@ -1,0 +1,240 @@
+import { supabase } from '@/lib/supabase';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useState } from 'react';
+import {
+    Dimensions,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
+
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.90;
+const CARD_WIDTH = SCREEN_WIDTH - 5; // Matches native
+
+interface NewsItem {
+    id: string;
+    title: string;
+    content: string;
+    category: string;
+    published_at: string;
+    image_url: string | null;
+}
+
+interface VerticalNewsCarouselProps {
+    category: string;
+}
+
+export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
+    const [articles, setArticles] = useState<NewsItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchNews = async () => {
+            setLoading(true);
+
+            let query = supabase
+                .from('news')
+                .select('*')
+                .eq('is_published', true)
+                .order('published_at', { ascending: false });
+
+            if (category !== 'all') {
+                query = query.eq('category', category);
+            }
+
+            const { data } = await query;
+
+            if (data) setArticles(data);
+            setLoading(false);
+        };
+
+        fetchNews();
+    }, [category]);
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+        });
+    };
+
+    const NewsCard = ({ article }: { article: NewsItem }) => {
+        return (
+            <View style={styles.cardContainer}>
+                <View style={styles.card}>
+                    {article?.image_url && (
+                        <>
+                            <Image
+                                source={{ uri: article.image_url }}
+                                style={styles.image}
+                                resizeMode="cover"
+                            />
+                            <LinearGradient
+                                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
+                                style={styles.imageGradient}
+                            />
+                        </>
+                    )}
+
+                    <View style={styles.content}>
+                        <View style={styles.categoryBadge}>
+                            <Text style={styles.categoryText}>
+                                {article.category.toUpperCase()}
+                            </Text>
+                        </View>
+
+                        <Text style={styles.headline} numberOfLines={4}>
+                            {article.title}
+                        </Text>
+
+                        <View style={styles.divider} />
+
+                        <Text style={styles.description} numberOfLines={6}>
+                            {article.content}
+                        </Text>
+
+                        <View style={styles.footer}>
+                            <Text style={styles.date}>{formatDate(article.published_at)}</Text>
+                        </View>
+                    </View>
+                </View>
+            </View>
+        );
+    };
+
+    return (
+        <View style={styles.container}>
+            {loading && (
+                <View style={styles.loaderContainer}>
+                    <Text style={styles.loaderText}>Loading...</Text>
+                </View>
+            )}
+
+            {!loading && articles.length === 0 && (
+                <View style={styles.loaderContainer}>
+                    <Text style={styles.loaderText}>No articles found</Text>
+                </View>
+            )}
+
+            {!loading && articles.length > 0 && (
+                <ScrollView
+                    style={styles.pager}
+                    pagingEnabled
+                    showsVerticalScrollIndicator={false}
+                    snapToInterval={CARD_HEIGHT * 0.96} // Snap to card height
+                    snapToAlignment="center"
+                    decelerationRate="fast"
+                // In web, strictly vertical scrolling
+                >
+                    {articles.map((article, index) => (
+                        <View key={article.id} style={styles.page}>
+                            <NewsCard article={article} />
+                        </View>
+                    ))}
+                </ScrollView>
+            )}
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#0A0A0A' },
+
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loaderText: {
+        color: '#9CA3AF',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+
+    pager: { flex: 1 },
+    page: {
+        height: CARD_HEIGHT * 0.96, // Fixed height per page for basic vertical snapping simulation
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+
+    cardContainer: {
+        width: CARD_WIDTH,
+        height: '100%',
+        justifyContent: 'center',
+    },
+
+    card: {
+        flex: 1,
+        borderRadius: 26,
+        overflow: 'hidden',
+        backgroundColor: '#111418',
+    },
+
+    image: {
+        width: '100%',
+        height: '50%',
+    },
+
+    imageGradient: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        height: '55%',
+    },
+
+    content: { flex: 1, padding: 22 },
+
+    categoryBadge: {
+        alignSelf: 'flex-start',
+        backgroundColor: 'rgba(14,165,233,0.25)',
+        borderWidth: 1,
+        borderColor: '#0EA5E9',
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 14,
+        marginBottom: 14,
+    },
+
+    categoryText: {
+        color: '#0EA5E9',
+        fontWeight: '700',
+        fontSize: 12,
+        letterSpacing: 1,
+    },
+
+    headline: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#F9FAFB',
+        marginBottom: 12,
+    },
+
+    divider: {
+        width: 50,
+        height: 3,
+        backgroundColor: '#0EA5E9',
+        borderRadius: 2,
+        marginBottom: 14,
+    },
+
+    description: {
+        fontSize: 15.5,
+        color: '#D1D5DB',
+        lineHeight: 25,
+    },
+
+    footer: {
+        marginTop: 'auto',
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderColor: 'rgba(255,255,255,0.08)',
+    },
+
+    date: { color: '#9CA3AF', fontSize: 13 },
+});

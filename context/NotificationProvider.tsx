@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { io, Socket } from 'socket.io-client';
-import * as Device from 'expo-device';
-import Constants from 'expo-constants';
 
 // Configure notifications handler
 Notifications.setNotificationHandler({
@@ -36,8 +35,8 @@ const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.x:3001';
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
     const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
     const [notification, setNotification] = useState<Notifications.Notification | undefined>(undefined);
-    const notificationListener = useRef<Notifications.EventSubscription>();
-    const responseListener = useRef<Notifications.EventSubscription>();
+    const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+    const responseListener = useRef<Notifications.EventSubscription | null>(null);
     const [socket, setSocket] = useState<Socket | undefined>(undefined);
 
     useEffect(() => {
@@ -77,10 +76,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
         return () => {
             if (notificationListener.current) {
-                Notifications.removeNotificationSubscription(notificationListener.current);
-            }
-            if (responseListener.current) {
-                Notifications.removeNotificationSubscription(responseListener.current);
+                notificationListener.current?.remove();
+                responseListener.current?.remove();
             }
             newSocket.disconnect();
         };
