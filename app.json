@@ -2,7 +2,7 @@
   "expo": {
     "name": "Newsbite",
     "slug": "newsbite-app",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/newsbite-logo.png",
     "scheme": "newsbiteapp",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.krishanx20033.newsbiteapp",
-      "versionCode": 7,
+      "versionCode": 10,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/newsbite-logo.png",
         "backgroundColor": "#ffffff"

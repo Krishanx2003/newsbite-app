@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AboutScreen() {
@@ -35,10 +35,16 @@ export default function AboutScreen() {
                 </Text>
 
                 <Text style={styles.sectionTitle}>Contact Us</Text>
-                <Text style={styles.paragraph}>
-                    Email: newsbiteteam@gmail.com{'\n'}
-                    Website: www.newsbite.in
-                </Text>
+                <TouchableOpacity onPress={() => Linking.openURL('mailto:newsbiteteam@gmail.com')}>
+                    <Text style={[styles.paragraph, { color: '#0EA5E9', textDecorationLine: 'underline' }]}>
+                        Email: newsbiteteam@gmail.com
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL('https://www.newsbite.in')}>
+                    <Text style={[styles.paragraph, { color: '#0EA5E9', textDecorationLine: 'underline' }]}>
+                        Website: www.newsbite.in
+                    </Text>
+                </TouchableOpacity>
 
                 <View style={{ height: 40 }} />
             </ScrollView>

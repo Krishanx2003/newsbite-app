@@ -136,9 +136,8 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
             </Text>
             <View style={styles.footer}>
               <View>
-                <Text style={styles.source}>{article.source || 'Newsbite'}</Text>
-                {/* Commenting Date */}
-                {/* <Text style={styles.date}>{formatDate(article.published_at)}</Text> */}
+                <Text style={styles.source}>Source: {article.source || 'Newsbite'}</Text>
+                <Text style={styles.date}>{formatDate(article.published_at)}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => {
