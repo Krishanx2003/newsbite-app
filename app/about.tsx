@@ -40,6 +40,11 @@ export default function AboutScreen() {
                         Email: newsbiteteam@gmail.com
                     </Text>
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL('tel:+919837262798')}>
+                    <Text style={[styles.paragraph, { color: '#0EA5E9', textDecorationLine: 'underline' }]}>
+                        Phone: +91 9837-262-798
+                    </Text>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => Linking.openURL('https://www.newsbite.in')}>
                     <Text style={[styles.paragraph, { color: '#0EA5E9', textDecorationLine: 'underline' }]}>
                         Website: www.newsbite.in

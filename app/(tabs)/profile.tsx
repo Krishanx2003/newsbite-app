@@ -5,6 +5,7 @@ import {
   Clock,
   FileText,
   Info,
+  Mail,
   MessageSquare,
   Settings,
   Share2,
@@ -148,6 +149,12 @@ export default function ProfileTab() {
               subtitle="Version, ownership, and mission"
               onPress={() => router.push('/about')}
             />
+            <MenuItem
+              icon={<MessageSquare size={22} color="#FF6B35" strokeWidth={2} />}
+              title="Contact Us"
+              subtitle="Email, phone, and website"
+              onPress={() => router.push('/contact')}
+            />
           </View>
         </View>
 
@@ -175,7 +182,7 @@ export default function ProfileTab() {
               }
               title="Send Feedback"
               subtitle="Help us improve the app"
-              onPress={() => { }}
+              onPress={() => router.push('/contact')}
             />
           </View>
         </View>

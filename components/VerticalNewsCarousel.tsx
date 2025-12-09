@@ -50,10 +50,16 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     const fetchNews = async () => {
       setLoading(true);
 
+      // Calculate date 3 months ago
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const threeMonthsAgoISO = threeMonthsAgo.toISOString();
+
       let query = supabase
         .from('news')
         .select('*')
         .eq('is_published', true)
+        .gte('published_at', threeMonthsAgoISO) // Only articles from last 3 months
         .order('published_at', { ascending: false });
 
       // ✅ MY FEED: load all news
@@ -71,10 +77,12 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
   }, [category]);
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Date not available';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -136,7 +144,7 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
             </Text>
             <View style={styles.footer}>
               <View>
-                <Text style={styles.source}>Source: {article.source || 'Newsbite'}</Text>
+                <Text style={styles.source}>Publisher: {article.source || 'Newsbite'}</Text>
                 <Text style={styles.date}>{formatDate(article.published_at)}</Text>
               </View>
               <TouchableOpacity

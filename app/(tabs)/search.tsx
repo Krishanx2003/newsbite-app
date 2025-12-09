@@ -103,10 +103,16 @@ export default function SearchScreen() {
       setLoading(true);
       setError(null);
 
+      // Calculate date 3 months ago
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const threeMonthsAgoISO = threeMonthsAgo.toISOString();
+
       let query = supabase
         .from('news')
         .select('*')
         .eq('is_published', true)
+        .gte('published_at', threeMonthsAgoISO) // Only articles from last 3 months
         .order('published_at', { ascending: false });
 
       const { data, error } = await query;
@@ -207,17 +213,26 @@ export default function SearchScreen() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Date not available';
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-    if (diffInHours < 1) {
-      return 'Just now';
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
+    // Show full date for compliance (required by Google Play)
+    if (diffInHours < 24) {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays}d ago`;
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
     }
   };
 
@@ -310,13 +325,14 @@ export default function SearchScreen() {
               {debouncedQuery ? highlightText(description, debouncedQuery) : description}
             </Text>
             <View style={styles.newsFooter}>
-              <Text style={styles.newsSource}>
-                {item.category || 'News'} • {item.source || 'Newsbite'}
-              </Text>
-              {/* Commenting Date */}
-              {/* <Text style={styles.newsDate}>
-                {formatDate(item.published_at || item.created_at)}
-              </Text> */}
+              <View style={styles.newsFooterLeft}>
+                <Text style={styles.newsSource}>
+                  Publisher: {item.source || 'Newsbite'}
+                </Text>
+                <Text style={styles.newsDate}>
+                  {formatDate(item.published_at || item.created_at)}
+                </Text>
+              </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -671,7 +687,10 @@ const styles = StyleSheet.create({
   newsFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  newsFooterLeft: {
+    flex: 1,
   },
   newsSource: {
     fontSize: 12,
