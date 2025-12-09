@@ -6,6 +6,8 @@
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "seed-news": "node ./scripts/seed-news.js",
+    "check-news": "node ./scripts/check-news.js",
+    "test-insert": "node ./scripts/test-insert.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

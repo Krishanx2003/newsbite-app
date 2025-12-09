@@ -20,25 +20,39 @@ try {
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Try service role key first (for seeding), fall back to anon key
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Error: Missing Supabase credentials!');
   console.error('\nPlease set environment variables:');
   console.error('  EXPO_PUBLIC_SUPABASE_URL=your_supabase_url');
   console.error('  EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key');
+  console.error('\nOr for seeding (bypasses RLS):');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=your_service_role_key');
+  console.error('\n⚠️  If you get RLS policy errors, you need to either:');
+  console.error('  1. Add an RLS policy (see scripts/fix-rls-policy.sql)');
+  console.error('  2. Use service role key (never commit this to git!)');
   console.error('\nOr create a .env file with these values.');
-  console.error('\nYou can also run:');
-  console.error('  EXPO_PUBLIC_SUPABASE_URL=... EXPO_PUBLIC_SUPABASE_ANON_KEY=... node scripts/seed-news.js');
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Generate recent dates (within last 30 days)
+// Warn if using service role key
+if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('⚠️  WARNING: Using service role key - this bypasses RLS policies!');
+  console.warn('   Never commit this key to version control!\n');
+}
+
+// Generate recent dates - use TODAY or very recent dates to ensure visibility
 const getRecentDate = (daysAgo) => {
   const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
+  // Use 0-2 days ago max to ensure articles are definitely recent
+  const daysBack = Math.min(daysAgo, 2);
+  date.setDate(date.getDate() - daysBack);
+  // Set to a specific time to ensure consistency
+  date.setHours(12, 0, 0, 0);
   return date.toISOString();
 };
 
@@ -47,7 +61,7 @@ const recentNewsArticles = [
   {
     title: "AI Breakthrough: New Language Model Surpasses Human Performance in Coding Tasks",
     content: "A leading tech company has announced a revolutionary AI language model that has demonstrated superior performance in software development tasks. The model, trained on billions of lines of code, can now generate, debug, and optimize code with unprecedented accuracy. Industry experts predict this will transform software development workflows, potentially reducing development time by up to 50%. The technology is expected to be available to developers in the coming months, with early access programs already generating significant interest from major tech firms worldwide.",
-    category: "Technology",
+    category: "Tech",
     image_url: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=800",
     source: "TechNews Daily",
     published_at: getRecentDate(2),
@@ -92,7 +106,7 @@ const recentNewsArticles = [
   {
     title: "SpaceX Successfully Launches Mission to Mars with First Human Passengers",
     content: "In a historic moment for space exploration, SpaceX has successfully launched its first crewed mission to Mars. The spacecraft, carrying four astronauts, is expected to reach the Red Planet in approximately seven months. This mission represents a major milestone in humanity's quest to become a multi-planetary species. The crew will conduct extensive research on Mars' surface, testing life support systems and studying the planet's geology and potential for future colonization.",
-    category: "Technology",
+    category: "Tech",
     image_url: "https://images.pexels.com/photos/2156/sky-earth-space-working.jpg?auto=compress&cs=tinysrgb&w=800",
     source: "Space News",
     published_at: getRecentDate(6),
@@ -101,7 +115,7 @@ const recentNewsArticles = [
   {
     title: "Major Tech Company Unveils Next-Generation Smartphone with Foldable Display",
     content: "A leading smartphone manufacturer has unveiled its latest flagship device featuring an innovative foldable display technology. The new phone can seamlessly transform from a compact device to a tablet-sized screen, offering users unprecedented flexibility. Early reviews praise the device's durability, display quality, and innovative software features designed specifically for the foldable form factor. Pre-orders have already exceeded expectations, with the company reporting record-breaking sales figures in the first 24 hours.",
-    category: "Technology",
+    category: "Tech",
     image_url: "https://images.pexels.com/photos/607812/pexels-photo-607812.jpeg?auto=compress&cs=tinysrgb&w=800",
     source: "TechReview",
     published_at: getRecentDate(7),
@@ -137,7 +151,7 @@ const recentNewsArticles = [
   {
     title: "Breakthrough in Quantum Computing Achieves New Milestone",
     content: "Scientists have achieved a major breakthrough in quantum computing, successfully demonstrating error correction that could make quantum computers practical for real-world applications. The research team managed to maintain quantum states for significantly longer periods, addressing one of the biggest challenges in quantum computing. This advancement could revolutionize fields such as cryptography, drug discovery, and complex problem-solving. Industry leaders are already exploring partnerships to commercialize this technology.",
-    category: "Technology",
+    category: "Tech",
     image_url: "https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=800",
     source: "Science Daily",
     published_at: getRecentDate(11),
@@ -155,7 +169,7 @@ const recentNewsArticles = [
   {
     title: "New Education Initiative Aims to Bridge Digital Divide",
     content: "A comprehensive education initiative has been launched to provide digital literacy training and technology access to underserved communities worldwide. The program will distribute millions of devices, establish learning centers, and train educators in digital skills. The initiative has received support from governments, tech companies, and non-profit organizations. Organizers hope to reach 100 million students over the next five years, ensuring that no one is left behind in the digital age.",
-    category: "Education",
+    category: "India",
     image_url: "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=800",
     source: "Education News",
     published_at: getRecentDate(13),
@@ -271,6 +285,18 @@ async function seedNews() {
       if (error) {
         console.error(`❌ Error inserting batch ${Math.floor(i / batchSize) + 1}:`, error.message);
 
+        // Check for RLS policy error
+        if (error.code === '42501' || error.message.includes('row-level security')) {
+          console.error('\n   🔒 RLS POLICY ERROR DETECTED!');
+          console.error('   Your database has Row Level Security enabled but no policy allows inserts.');
+          console.error('   Solutions:');
+          console.error('   1. Run the SQL script: scripts/fix-rls-policy.sql in Supabase SQL Editor');
+          console.error('   2. Or use service role key: SUPABASE_SERVICE_ROLE_KEY=... npm run seed-news');
+          console.error('   See scripts/README-RLS-FIX.md for details.\n');
+        } else {
+          console.error('   Full error:', JSON.stringify(error, null, 2));
+        }
+
         // If error is about a missing column (like 'source'), try without it
         if (error.message && error.message.includes('column') && error.message.includes('source')) {
           console.log('   ⚠️  Source column not found - retrying without source field...');
@@ -292,6 +318,7 @@ async function seedNews() {
             continue;
           } else {
             console.error('   ❌ Retry also failed:', retryError?.message);
+            console.error('   Retry error details:', JSON.stringify(retryError, null, 2));
           }
         }
 
@@ -299,6 +326,10 @@ async function seedNews() {
       } else {
         inserted += data.length;
         console.log(`✅ Inserted ${data.length} articles (${inserted}/${articlesToInsert.length} total)`);
+        // Show sample of inserted articles
+        if (data && data.length > 0) {
+          console.log(`   Sample: "${data[0].title}" (Category: ${data[0].category}, Published: ${new Date(data[0].published_at).toLocaleDateString()})`);
+        }
       }
     }
 
