@@ -21,7 +21,7 @@ export default function AboutScreen() {
                         <Text style={styles.logoText}>NB</Text>
                     </View>
                     <Text style={styles.appName}>Newsbite</Text>
-                    <Text style={styles.version}>Version 1.0.2</Text>
+                    <Text style={styles.version}>Version 1.0.3</Text>
                 </View>
 
                 <Text style={styles.sectionTitle}>Our Mission</Text>

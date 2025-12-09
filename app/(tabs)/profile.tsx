@@ -223,7 +223,7 @@ export default function ProfileTab() {
 
         {/* App Version */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Version 1.0.2</Text>
+          <Text style={styles.versionText}>Version 1.0.3</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
