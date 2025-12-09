@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronLeft, Mail, Phone, Globe } from 'lucide-react-native';
+import { ChevronLeft, Globe, Mail, Phone } from 'lucide-react-native';
 import React from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
