@@ -1,4 +1,5 @@
 // app/news-customization.tsx 
+import { useTheme } from '@/context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router'; // ✅ Added
 import { ChevronLeft, Moon, Sun } from 'lucide-react-native';
@@ -22,88 +23,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-export default function NewsCustomizationScreen() {  // ✅ Removed navigation prop
-  const [isDark, setIsDark] = useState(false);
-
-  // Load saved theme
-  useEffect(() => {
-    (async () => {
-      try {
-        const saved = await AsyncStorage.getItem('appTheme');
-        if (saved === 'dark') setIsDark(true);
-      } catch (e) {
-        console.warn('Failed to load theme', e);
-      }
-    })();
-  }, []);
-
-  // Save theme
-  const saveTheme = async () => {
-    try {
-      await AsyncStorage.setItem('appTheme', isDark ? 'dark' : 'light');
-      Alert.alert('Saved', `Theme set to ${isDark ? 'Dark' : 'Light'} Mode`);
-    } catch (e) {
-      Alert.alert('Error', 'Could not save theme');
-    }
-  };
-
-  // Animated press feedback
-  const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
+export default function NewsCustomizationScreen() {
+  const { colors, isDark, toggleTheme } = useTheme();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={24} color="#1F2937" />
+          <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Appearance</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Appearance</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Theme Toggle Card */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]}>
           <View style={styles.toggleRow}>
             {isDark ? (
-              <Moon size={22} color="#FF6B35" />
+              <Moon size={22} color={colors.tint} />
             ) : (
-              <Sun size={22} color="#FF6B35" />
+              <Sun size={22} color={colors.tint} />
             )}
-            <Text style={styles.toggleLabel}>
+            <Text style={[styles.toggleLabel, { color: colors.text }]}>
               {isDark ? 'Dark Mode' : 'Light Mode'}
             </Text>
             <Switch
-              trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
+              trackColor={{ false: '#E5E7EB', true: colors.tint }}
               thumbColor="#FFFFFF"
               ios_backgroundColor="#E5E7EB"
               value={isDark}
-              onValueChange={setIsDark}
+              onValueChange={toggleTheme}
             />
           </View>
         </View>
 
-        {/* Save Button */}
-        <AnimatedTouchable
-          style={[styles.saveBtn, animatedStyle]}
-          onPress={saveTheme}
-          onPressIn={() => {
-            scale.value = withSpring(0.97);
-            opacity.value = withTiming(0.8);
-          }}
-          onPressOut={() => {
-            scale.value = withSpring(1);
-            opacity.value = withTiming(1);
-          }}
-          activeOpacity={1}
-        >
-          <Text style={styles.saveBtnText}>Save Theme</Text>
-        </AnimatedTouchable>
+        <View style={styles.infoContainer}>
+          <Text style={[styles.infoText, { color: colors.muted }]}>
+            Toggle to switch between light and dark themes. Your preference will be saved automatically.
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -154,19 +114,15 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     fontWeight: '500',
-    color: '#1F2937',
   },
-  saveBtn: {
+  infoContainer: {
     marginHorizontal: 16,
-    marginTop: 32,
-    backgroundColor: '#FF6B35',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 8,
   },
-  saveBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  infoText: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });

@@ -1,49 +1,28 @@
 // app/(tabs)/_layout.tsx
+import { useTheme } from '@/context/ThemeContext';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Tabs, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
 export default function TabLayout() {
-  const systemColorScheme = useColorScheme(); // 'light' | 'dark' | null
-  const [userTheme, setUserTheme] = useState<'light' | 'dark' | null>(null);
-
-  // ✅ Load theme whenever tabs come into focus (e.g., returning from news-customization)
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        try {
-          const saved = await AsyncStorage.getItem('appTheme');
-          if (saved === 'light' || saved === 'dark') {
-            setUserTheme(saved);
-          }
-        } catch (e) {
-          console.warn('Failed to load theme', e);
-        }
-      })();
-    }, [])
-  );
-
-  // Use user preference first, then system
-  const isDark = userTheme ? userTheme === 'dark' : systemColorScheme === 'dark';
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: isDark ? '#FF6B35' : '#FF6B35', // ✅ Using your app's accent color
-        tabBarInactiveTintColor: isDark ? '#9CA3AF' : '#6B7280',
+        tabBarActiveTintColor: colors.tabIconSelected,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: isDark ? '#111827' : '#FFFFFF',
-          borderTopColor: isDark ? '#1F2937' : '#E5E7EB',
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
+          elevation: 20, // High elevation for shadow
+          shadowColor: isDark ? '#000' : '#888',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 10,
         },
         tabBarLabelStyle: {
           fontSize: 11,

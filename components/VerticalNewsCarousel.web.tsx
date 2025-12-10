@@ -1,3 +1,4 @@
+import { useTheme } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TriangleAlert } from 'lucide-react-native';
@@ -32,6 +33,7 @@ interface VerticalNewsCarouselProps {
 }
 
 export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
+    const { colors, isDark } = useTheme();
     const [articles, setArticles] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -77,16 +79,16 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     const NewsCard = ({ article }: { article: NewsItem }) => {
         return (
             <View style={styles.cardContainer}>
-                <View style={styles.card}>
+                <View style={[styles.card, { backgroundColor: colors.card }]}>
                     {article?.image_url && (
                         <>
                             <Image
                                 source={{ uri: article.image_url }}
-                                style={styles.image}
+                                style={styles.image as any}
                                 resizeMode="cover"
                             />
                             <LinearGradient
-                                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
+                                colors={['transparent', isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)', isDark ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.1)']}
                                 style={styles.imageGradient}
                             />
                         </>
@@ -99,20 +101,20 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                             </Text>
                         </View>
 
-                        <Text style={styles.headline} numberOfLines={4}>
+                        <Text style={[styles.headline, { color: colors.text }]} numberOfLines={4}>
                             {article.title}
                         </Text>
 
                         <View style={styles.divider} />
 
-                        <Text style={styles.description} numberOfLines={6}>
+                        <Text style={[styles.description, { color: colors.muted }]} numberOfLines={6}>
                             {article.content}
                         </Text>
 
-                        <View style={styles.footer}>
+                        <View style={[styles.footer, { borderColor: colors.border }]}>
                             <View>
                                 <Text style={styles.source}>Publisher: {article.source || 'Newsbite'}</Text>
-                                <Text style={styles.date}>{formatDate(article.published_at)}</Text>
+                                <Text style={[styles.date, { color: colors.muted }]}>{formatDate(article.published_at)}</Text>
                             </View>
                             <TouchableOpacity
                                 onPress={() => {
@@ -123,7 +125,7 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                                         console.log('Reported');
                                     }
                                 }}
-                                style={styles.reportButton}
+                                style={[styles.reportButton, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}
                             >
                                 <TriangleAlert size={16} color="#EF4444" />
                             </TouchableOpacity>
@@ -135,16 +137,16 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {loading && (
                 <View style={styles.loaderContainer}>
-                    <Text style={styles.loaderText}>Loading...</Text>
+                    <Text style={[styles.loaderText, { color: colors.muted }]}>Loading...</Text>
                 </View>
             )}
 
             {!loading && articles.length === 0 && (
                 <View style={styles.loaderContainer}>
-                    <Text style={styles.loaderText}>No articles found</Text>
+                    <Text style={[styles.loaderText, { color: colors.muted }]}>No articles found</Text>
                 </View>
             )}
 
@@ -178,13 +180,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     loaderText: {
-        color: '#9CA3AF',
         fontSize: 16,
         fontWeight: '500',
     },
 
     pager: { flex: 1, height: '100%' }, // Explicit height for web scrollview container
     page: {
+        // @ts-ignore
         height: '100vh', // Use viewport height for web to ensure full screen snapping
         justifyContent: 'center',
         alignItems: 'center',
@@ -201,7 +203,6 @@ const styles = StyleSheet.create({
         flex: 1,
         borderRadius: 26,
         overflow: 'hidden',
-        backgroundColor: '#111418',
     },
 
     image: {
@@ -239,7 +240,6 @@ const styles = StyleSheet.create({
     headline: {
         fontSize: 24,
         fontWeight: '800',
-        color: '#F9FAFB',
         marginBottom: 12,
     },
 
@@ -253,7 +253,6 @@ const styles = StyleSheet.create({
 
     description: {
         fontSize: 15.5,
-        color: '#D1D5DB',
         lineHeight: 25,
     },
 
@@ -261,13 +260,12 @@ const styles = StyleSheet.create({
         marginTop: 'auto',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
 
-    date: { color: '#9CA3AF', fontSize: 13 },
+    date: { fontSize: 13 },
     source: { color: '#0EA5E9', fontSize: 13, fontWeight: '600', marginBottom: 4 },
     reportButton: {
         padding: 8,

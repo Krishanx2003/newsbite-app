@@ -1,3 +1,4 @@
+import { useTheme } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase'; // Adjust path as needed
 import { Bell, BookOpen, Globe, Search, TrendingUp, Users, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -69,6 +70,7 @@ const insightsData = [
 ];
 
 export default function SearchScreen() {
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeTab, setActiveTab] = useState('allnews');
@@ -203,7 +205,7 @@ export default function SearchScreen() {
     return parts.map((part, index) => {
       if (part.toLowerCase() === query.toLowerCase()) {
         return (
-          <Text key={index} style={styles.highlightedText}>
+          <Text key={index} style={[styles.highlightedText, { backgroundColor: isDark ? '#78350F' : '#FEF3C7', color: isDark ? '#FEF3C7' : '#92400E' }]}>
             {part}
           </Text>
         );
@@ -256,31 +258,31 @@ export default function SearchScreen() {
     const getIcon = (iconName: string) => {
       switch (iconName) {
         case 'globe':
-          return <Globe size={20} color="#2563EB" />;
+          return <Globe size={20} color={colors.tint} />;
         case 'trending':
-          return <TrendingUp size={20} color="#2563EB" />;
+          return <TrendingUp size={20} color={colors.tint} />;
         case 'users':
-          return <Users size={20} color="#2563EB" />;
+          return <Users size={20} color={colors.tint} />;
         default:
-          return <BookOpen size={20} color="#2563EB" />;
+          return <BookOpen size={20} color={colors.tint} />;
       }
     };
 
     return (
       <Animated.View
         entering={FadeIn.delay(index * 100).springify()}
-        style={styles.insightCard}
+        style={[styles.insightCard, { backgroundColor: colors.card }]}
       >
         <TouchableOpacity activeOpacity={0.7}>
-          <Image source={{ uri: item.imageUrl }} style={styles.insightImage} />
+          <Image source={{ uri: item.imageUrl }} style={[styles.insightImage, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]} />
           <View style={styles.insightContent}>
             <View style={styles.insightHeader}>
               {getIcon(item.icon)}
-              <Text style={styles.insightTitle} numberOfLines={1}>
+              <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>
                 {item.title}
               </Text>
             </View>
-            <Text style={styles.insightSummary} numberOfLines={2}>
+            <Text style={[styles.insightSummary, { color: colors.muted }]} numberOfLines={2}>
               {item.summary}
             </Text>
           </View>
@@ -299,7 +301,7 @@ export default function SearchScreen() {
         exiting={FadeOut}
       >
         <TouchableOpacity
-          style={styles.newsCard}
+          style={[styles.newsCard, { backgroundColor: colors.card }]}
           activeOpacity={0.7}
           onPress={() => {
             // Navigate to article details or open in browser
@@ -308,28 +310,28 @@ export default function SearchScreen() {
           {item.image_url && (
             <Image
               source={{ uri: item.image_url }}
-              style={styles.newsThumbnail}
+              style={[styles.newsThumbnail, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}
 
             />
           )}
           <View style={styles.newsContent}>
             {item.category && (
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
+              <View style={[styles.categoryBadge, { backgroundColor: isDark ? 'rgba(14,165,233,0.1)' : '#EFF6FF' }]}>
+                <Text style={[styles.categoryText, { color: colors.tint }]}>{item.category.toUpperCase()}</Text>
               </View>
             )}
-            <Text style={styles.newsTitle} numberOfLines={2}>
+            <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>
               {debouncedQuery ? highlightText(item.title, debouncedQuery) : item.title}
             </Text>
-            <Text style={styles.newsDescription} numberOfLines={2}>
+            <Text style={[styles.newsDescription, { color: colors.muted }]} numberOfLines={2}>
               {debouncedQuery ? highlightText(description, debouncedQuery) : description}
             </Text>
             <View style={styles.newsFooter}>
               <View style={styles.newsFooterLeft}>
-                <Text style={styles.newsSource}>
+                <Text style={[styles.newsSource, { color: colors.tint }]}>
                   Publisher: {item.source || 'Newsbite'}
                 </Text>
-                <Text style={styles.newsDate}>
+                <Text style={[styles.newsDate, { color: colors.muted }]}>
                   {formatDate(item.published_at || item.created_at)}
                 </Text>
               </View>
@@ -345,9 +347,9 @@ export default function SearchScreen() {
       entering={FadeIn.delay(300)}
       style={styles.emptyState}
     >
-      <Search size={64} color="#9CA3AF" />
-      <Text style={styles.emptyTitle}>No results found</Text>
-      <Text style={styles.emptyDescription}>
+      <Search size={64} color={colors.muted} />
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No results found</Text>
+      <Text style={[styles.emptyDescription, { color: colors.muted }]}>
         Try searching with different keywords or check your spelling
       </Text>
     </Animated.View>
@@ -358,10 +360,10 @@ export default function SearchScreen() {
       entering={FadeIn.delay(300)}
       style={styles.emptyState}
     >
-      <Text style={styles.emptyTitle}>Something went wrong</Text>
-      <Text style={styles.emptyDescription}>{error}</Text>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>Something went wrong</Text>
+      <Text style={[styles.emptyDescription, { color: colors.muted }]}>{error}</Text>
       <TouchableOpacity
-        style={styles.retryButton}
+        style={[styles.retryButton, { backgroundColor: colors.tint }]}
         onPress={onRefresh}
       >
         <Text style={styles.retryButtonText}>Retry</Text>
@@ -371,27 +373,27 @@ export default function SearchScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.container, styles.centerContent, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="#2563EB" />
-        <Text style={styles.loadingText}>Loading news...</Text>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color={colors.tint} />
+        <Text style={[styles.loadingText, { color: colors.muted }]}>Loading news...</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 16 }]}>
       {/* Sticky Header */}
-      <View style={styles.stickyHeader}>
+      <View style={[styles.stickyHeader, { backgroundColor: colors.background }]}>
         {/* Search Bar */}
-        <Animated.View style={[styles.searchContainer, searchBarAnimatedStyle]}>
+        <Animated.View style={[styles.searchContainer, searchBarAnimatedStyle, { backgroundColor: colors.card }]}>
           <TouchableOpacity onPress={handleSearchPress} style={styles.searchIconContainer}>
-            <Search size={20} color="#6B7280" />
+            <Search size={20} color={colors.muted} />
           </TouchableOpacity>
 
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search news, topics…"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCapitalize="none"
@@ -403,7 +405,7 @@ export default function SearchScreen() {
           {searchQuery.length > 0 && (
             <Animated.View entering={FadeIn} exiting={FadeOut}>
               <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                <X size={20} color="#6B7280" />
+                <X size={20} color={colors.muted} />
               </TouchableOpacity>
             </Animated.View>
           )}
@@ -420,13 +422,15 @@ export default function SearchScreen() {
               key={tab.id}
               style={[
                 styles.tab,
-                activeTab === tab.id && styles.activeTab
+                { backgroundColor: colors.card },
+                activeTab === tab.id && { backgroundColor: colors.tint }
               ]}
               onPress={() => setActiveTab(tab.id)}
             >
               <Text
                 style={[
                   styles.tabText,
+                  { color: colors.muted },
                   activeTab === tab.id && styles.activeTabText
                 ]}
               >
@@ -454,7 +458,7 @@ export default function SearchScreen() {
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />
         }
       >
         {/* News Results */}
@@ -475,7 +479,7 @@ export default function SearchScreen() {
 
           {isSearching && (
             <Animated.View entering={FadeIn} style={styles.loadingState}>
-              <Text style={styles.loadingText}>Searching...</Text>
+              <Text style={[styles.loadingText, { color: colors.muted }]}>Searching...</Text>
             </Animated.View>
           )}
         </View>
@@ -483,7 +487,7 @@ export default function SearchScreen() {
         {/* Insights Section */}
         {!searchQuery && (
           <View style={styles.insightsSection}>
-            <Text style={styles.sectionTitle}>Insights for You</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Insights for You</Text>
             <FlatList
               data={insightsData}
               renderItem={renderInsightCard}
@@ -502,14 +506,14 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    // backgroundColor: handled by dynamic theme
   },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   stickyHeader: {
-    backgroundColor: '#F9FAFB',
+    // backgroundColor: handled by dynamic theme
     paddingHorizontal: 16,
     paddingBottom: 16,
     shadowColor: '#000000',
@@ -524,7 +528,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: handled by dynamic theme
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -545,7 +549,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#1F2937',
+    // color: handled by dynamic theme
   },
   clearButton: {
     marginLeft: 12,
@@ -559,7 +563,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: handled by dynamic theme
     marginRight: 8,
     shadowColor: '#000000',
     shadowOffset: {
@@ -571,56 +575,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activeTab: {
-    backgroundColor: '#2563EB',
+    // backgroundColor: handled by dynamic theme
   },
   tabText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: '#6B7280',
+    // color: handled by dynamic theme
   },
   activeTabText: {
     color: '#FFFFFF',
     fontFamily: 'Inter-SemiBold',
-  },
-  notificationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  notificationButton: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: '#EF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    fontSize: 10,
-    fontFamily: 'Inter-Bold',
-    color: '#FFFFFF',
-  },
-  notificationText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
   },
   content: {
     flex: 1,
@@ -633,7 +597,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   newsCard: {
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: handled by dynamic theme
     borderRadius: 16,
     marginBottom: 16,
     padding: 12,
@@ -651,15 +615,15 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
     marginRight: 12,
+    // backgroundColor: handled by dynamic theme
   },
   newsContent: {
     flex: 1,
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EFF6FF',
+    // backgroundColor: handled by dynamic theme
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -668,20 +632,20 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 10,
     fontFamily: 'Inter-Bold',
-    color: '#2563EB',
+    // color: handled by dynamic theme
     letterSpacing: 0.5,
   },
   newsTitle: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: '#1F2937',
+    // color: handled by dynamic theme
     lineHeight: 20,
     marginBottom: 6,
   },
   newsDescription: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    // color: handled by dynamic theme
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -696,16 +660,14 @@ const styles = StyleSheet.create({
   newsSource: {
     fontSize: 12,
     fontFamily: 'Inter-Medium',
-    color: '#2563EB',
+    // color: handled by dynamic theme
   },
   newsDate: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
+    // color: handled by dynamic theme
   },
   highlightedText: {
-    backgroundColor: '#FEF3C7',
-    color: '#92400E',
     fontFamily: 'Inter-SemiBold',
   },
   emptyState: {
@@ -718,14 +680,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontFamily: 'Inter-SemiBold',
-    color: '#1F2937',
+    // color: handled by dynamic theme
     marginTop: 16,
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    // color: handled by dynamic theme
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -736,12 +698,12 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
-    color: '#6B7280',
+    // color: handled by dynamic theme
     marginTop: 8,
   },
   retryButton: {
     marginTop: 16,
-    backgroundColor: '#2563EB',
+    // backgroundColor: handled by dynamic theme
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -758,7 +720,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontFamily: 'Inter-Bold',
-    color: '#1F2937',
+    // color: handled by dynamic theme
     marginBottom: 16,
     paddingHorizontal: 16,
   },
@@ -767,7 +729,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   insightCard: {
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: handled by dynamic theme
     borderRadius: 16,
     width: 280,
     shadowColor: '#000000',
@@ -783,7 +745,7 @@ const styles = StyleSheet.create({
   insightImage: {
     width: '100%',
     height: 120,
-    backgroundColor: '#F3F4F6',
+    // backgroundColor: handled by dynamic theme
   },
   insightContent: {
     padding: 16,
@@ -797,13 +759,13 @@ const styles = StyleSheet.create({
   insightTitle: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    color: '#1F2937',
+    // color: handled by dynamic theme
     flex: 1,
   },
   insightSummary: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    // color: handled by dynamic theme
     lineHeight: 20,
   },
 });
