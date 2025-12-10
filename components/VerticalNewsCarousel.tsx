@@ -2,7 +2,8 @@ import { useUserActivity } from '@/context/UserActivityContext';
 import { useTheme } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bookmark, Share2, TriangleAlert } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
+import { Bookmark, Headphones, Share2, TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -98,6 +99,23 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
   const NewsCard = ({ article, index }: { article: NewsItem; index: number }) => {
     const bookmarked = isBookmarked(article.id);
 
+    const [speaking, setSpeaking] = useState(false);
+
+    const handleSpeak = async () => {
+      const isSpeaking = await Speech.isSpeakingAsync();
+      if (isSpeaking) {
+        await Speech.stop();
+        setSpeaking(false);
+      } else {
+        setSpeaking(true);
+        Speech.speak(`${article.title}. ${article.content}`, {
+          onDone: () => setSpeaking(false),
+          onStopped: () => setSpeaking(false),
+          onError: () => setSpeaking(false),
+        });
+      }
+    };
+
     const handleShare = async () => {
       try {
         await Share.share({
@@ -171,6 +189,14 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
               </View>
 
               <View style={styles.actionsRow}>
+                {/* TTS Button */}
+                <TouchableOpacity
+                  onPress={handleSpeak}
+                  style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}
+                >
+                  <Headphones size={20} color={speaking ? colors.tint : colors.muted} />
+                </TouchableOpacity>
+
                 {/* Bookmark */}
                 <TouchableOpacity
                   onPress={() => toggleBookmark(article)}
@@ -247,6 +273,8 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
             if (articles[e.nativeEvent.position]) {
               addToHistory(articles[e.nativeEvent.position]);
             }
+            // Stop speech when changing cards
+            Speech.stop();
           }}
         >
           {articles.map((article, index) => (

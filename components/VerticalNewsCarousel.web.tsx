@@ -2,7 +2,7 @@ import { useUserActivity } from '@/context/UserActivityContext';
 import { useTheme } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bookmark, Share2, TriangleAlert } from 'lucide-react-native';
+import { Bookmark, Headphones, Share2, TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
@@ -80,6 +80,20 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
 
     const NewsCard = ({ article }: { article: NewsItem }) => {
         const bookmarked = isBookmarked(article.id);
+        const [speaking, setSpeaking] = useState(false);
+
+        const handleSpeak = () => {
+            if (speaking) {
+                window.speechSynthesis.cancel();
+                setSpeaking(false);
+            } else {
+                setSpeaking(true);
+                const utterance = new SpeechSynthesisUtterance(`${article.title}. ${article.content}`);
+                utterance.onend = () => setSpeaking(false);
+                utterance.onerror = () => setSpeaking(false);
+                window.speechSynthesis.speak(utterance);
+            }
+        };
 
         const handleShare = async () => {
             try {
@@ -142,6 +156,13 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                             </View>
 
                             <View style={styles.actionsRow}>
+                                <TouchableOpacity
+                                    onPress={handleSpeak}
+                                    style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}
+                                >
+                                    <Headphones size={20} color={speaking ? colors.tint : colors.muted} />
+                                </TouchableOpacity>
+
                                 {/* Bookmark */}
                                 <TouchableOpacity
                                     onPress={() => toggleBookmark(article)}
