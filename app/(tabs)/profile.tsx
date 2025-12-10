@@ -82,7 +82,7 @@ function MenuItem({ icon, title, subtitle, onPress, isDestructive }: MenuItemPro
 
 export default function ProfileTab() {
   const { colors, toggleTheme, theme } = useTheme();
-  const { clearAllData } = useUserActivity();
+  const { clearAllData, userProfile } = useUserActivity();
 
   const handlePreferences = () => {
     router.push('/news-customization');
@@ -128,13 +128,35 @@ export default function ProfileTab() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.muted }]}>
-            Manage your account and preferences
-          </Text>
+        {/* User Profile Header */}
+        <View style={styles.profileHeader}>
+          <TouchableOpacity onPress={() => router.push('/edit-profile')} activeOpacity={0.8}>
+            <View style={[styles.avatarContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              {/* Fallback to initials if no avatar */}
+              <Text style={[styles.avatarText, { color: colors.tint }]}>
+                {userProfile?.name?.charAt(0) || 'R'}
+              </Text>
+            </View>
+            {/* Edit Icon Badge */}
+            <View style={[styles.editBadge, { backgroundColor: colors.tint, borderColor: colors.background }]}>
+              <Settings size={12} color="#FFF" />
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.profileInfo}>
+            <Text style={[styles.userName, { color: colors.text }]}>{userProfile?.name || 'Reader'}</Text>
+            <Text style={[styles.userBio, { color: colors.muted }]}>{userProfile?.bio || 'News enthusiast'}</Text>
+
+            <TouchableOpacity
+              onPress={() => router.push('/edit-profile')}
+              style={[styles.editProfileBtn, { backgroundColor: colors.button }]}
+            >
+              <Text style={[styles.editProfileText, { color: colors.buttonText }]}>Edit Profile</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <View style={styles.divider} />
 
         {/* Menu Section: Your Content */}
         <View style={styles.sectionContainer}>
@@ -344,4 +366,70 @@ const styles = StyleSheet.create({
   destructiveText: {
     color: '#EF4444',
   },
+
+  // Profile Header Styles
+  profileHeader: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+  },
+  avatarContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  avatarText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 16,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+  },
+  profileInfo: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  userBio: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  editProfileBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  editProfileText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  }
 });

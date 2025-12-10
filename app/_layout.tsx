@@ -51,6 +51,7 @@ function InnerLayout() {
         <Stack.Screen name="contact" options={{ headerShown: false }} />
         <Stack.Screen name="saved" options={{ headerShown: false }} />
         <Stack.Screen name="history" options={{ headerShown: false }} />
+        <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     </NavThemeProvider>
