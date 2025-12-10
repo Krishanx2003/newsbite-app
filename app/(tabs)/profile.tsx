@@ -1,3 +1,4 @@
+import { useUserActivity } from '@/context/UserActivityContext';
 import { useTheme } from '@/context/ThemeContext';
 import { router } from 'expo-router';
 import {
@@ -17,7 +18,9 @@ import {
 import React from 'react';
 import {
   Alert,
+  Linking,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -79,24 +82,40 @@ function MenuItem({ icon, title, subtitle, onPress, isDestructive }: MenuItemPro
 
 export default function ProfileTab() {
   const { colors, toggleTheme, theme } = useTheme();
+  const { clearAllData } = useUserActivity();
 
   const handlePreferences = () => {
     router.push('/news-customization');
   };
 
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        message: 'Check out Newsbite - The best news app! Download it now: https://newsbite.in',
+        title: 'Share Newsbite',
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleRateApp = () => {
+    // Placeholder store URL - replace with actual Play Store / App Store link
+    Linking.openURL('https://play.google.com/store/apps/details?id=com.krishanx2003.newsbite');
+  };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.',
+      'Are you sure you want to delete your account? This action cannot be undone and all your data (bookmarks, history, preferences) will be permanently lost.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            //! TODO
-            // Implement actual deletion logic here
-            Alert.alert('Account Deleted', 'Your account will be checked and deleted within 72 hours.');
+          onPress: async () => {
+            await clearAllData();
+            Alert.alert('Account Deleted', 'Your data has been cleared from this device.');
           }
         }
       ]
@@ -125,14 +144,14 @@ export default function ProfileTab() {
               icon={<Bookmark size={22} color={colors.tint} strokeWidth={2} />}
               title="Saved Articles"
               subtitle="Articles you've bookmarked"
-              onPress={() => { }}
+              onPress={() => router.push('/saved')}
             />
 
             <MenuItem
               icon={<Clock size={22} color={colors.tint} strokeWidth={2} />}
               title="Reading History"
               subtitle="Your recently read articles"
-              onPress={() => { }}
+              onPress={() => router.push('/history')}
             />
           </View>
         </View>
@@ -147,7 +166,6 @@ export default function ProfileTab() {
               subtitle="Customize your news experience"
               onPress={handlePreferences}
             />
-            {/* Theme Toggle Removed - Moved to Preferences */}
 
             <MenuItem
               icon={<Info size={22} color={colors.tint} strokeWidth={2} />}
@@ -172,14 +190,14 @@ export default function ProfileTab() {
               icon={<Share2 size={22} color={colors.tint} strokeWidth={2} />}
               title="Share this App"
               subtitle="Invite friends to try the app"
-              onPress={() => { }}
+              onPress={handleShareApp}
             />
 
             <MenuItem
               icon={<Star size={22} color={colors.tint} strokeWidth={2} />}
               title="Rate this App"
               subtitle="Tell us what you think"
-              onPress={() => { }}
+              onPress={handleRateApp}
             />
 
             <MenuItem

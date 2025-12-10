@@ -1,7 +1,8 @@
+import { useUserActivity } from '@/context/UserActivityContext';
 import { useTheme } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TriangleAlert } from 'lucide-react-native';
+import { Bookmark, Share2, TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
@@ -11,7 +12,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -34,6 +35,7 @@ interface VerticalNewsCarouselProps {
 
 export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     const { colors, isDark } = useTheme();
+    const { toggleBookmark, isBookmarked } = useUserActivity();
     const [articles, setArticles] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -77,6 +79,28 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
     };
 
     const NewsCard = ({ article }: { article: NewsItem }) => {
+        const bookmarked = isBookmarked(article.id);
+
+        const handleShare = async () => {
+            try {
+                if (navigator.share) {
+                    await navigator.share({
+                        title: article.title,
+                        text: `${article.title}\n\nRead more on Newsbite app!`,
+                        url: window.location.href, // Or article deep link
+                    });
+                } else {
+                    // Fallback
+                    const url = window.location.href;
+                    await navigator.clipboard.writeText(`${article.title}\n${url}`);
+                    window.alert('Link copied to clipboard!');
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+
         return (
             <View style={styles.cardContainer}>
                 <View style={[styles.card, { backgroundColor: colors.card }]}>
@@ -112,23 +136,38 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                         </Text>
 
                         <View style={[styles.footer, { borderColor: colors.border }]}>
-                            <View>
+                            <View style={styles.footerInfo}>
                                 <Text style={styles.source}>Publisher: {article.source || 'Newsbite'}</Text>
                                 <Text style={[styles.date, { color: colors.muted }]}>{formatDate(article.published_at)}</Text>
                             </View>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    if (Platform.OS === 'web') {
+
+                            <View style={styles.actionsRow}>
+                                {/* Bookmark */}
+                                <TouchableOpacity
+                                    onPress={() => toggleBookmark(article)}
+                                    style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}
+                                >
+                                    <Bookmark size={20} color={bookmarked ? colors.tint : colors.muted} fill={bookmarked ? colors.tint : 'transparent'} />
+                                </TouchableOpacity>
+
+                                {/* Share */}
+                                <TouchableOpacity
+                                    onPress={handleShare}
+                                    style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}
+                                >
+                                    <Share2 size={20} color={colors.muted} />
+                                </TouchableOpacity>
+
+                                {/* Report */}
+                                <TouchableOpacity
+                                    onPress={() => {
                                         window.alert('Thank you. We have received your report and will review this content.');
-                                    } else {
-                                        // Fallback for non-web environments (though this file is web-specific)
-                                        console.log('Reported');
-                                    }
-                                }}
-                                style={[styles.reportButton, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}
-                            >
-                                <TriangleAlert size={16} color="#EF4444" />
-                            </TouchableOpacity>
+                                    }}
+                                    style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2' }]}
+                                >
+                                    <TriangleAlert size={16} color="#EF4444" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -265,11 +304,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
+    footerInfo: {
+        flex: 1,
+    },
+
     date: { fontSize: 13 },
     source: { color: '#0EA5E9', fontSize: 13, fontWeight: '600', marginBottom: 4 },
-    reportButton: {
-        padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#FEF2F2',
+
+    actionsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
+    actionButton: {
+        padding: 10,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 });

@@ -1,13 +1,15 @@
+import { useUserActivity } from '@/context/UserActivityContext';
 import { useTheme } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TriangleAlert } from 'lucide-react-native';
+import { Bookmark, Share2, TriangleAlert } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
   Image,
   Platform,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -42,6 +44,7 @@ interface VerticalNewsCarouselProps {
 
 export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
   const { colors, isDark } = useTheme();
+  const { toggleBookmark, isBookmarked, addToHistory } = useUserActivity();
   const [articles, setArticles] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +74,11 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
 
       const { data } = await query;
 
-      if (data) setArticles(data);
+      if (data) {
+        setArticles(data);
+        // Add first article to history if exists
+        if (data.length > 0) addToHistory(data[0]);
+      }
       setLoading(false);
     };
 
@@ -89,6 +96,18 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
   };
 
   const NewsCard = ({ article, index }: { article: NewsItem; index: number }) => {
+    const bookmarked = isBookmarked(article.id);
+
+    const handleShare = async () => {
+      try {
+        await Share.share({
+          message: `${article.title}\n\nRead more on Newsbite app!`,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     const animatedStyle = useAnimatedStyle(() => {
       const scale = interpolate(
         activeIndex.value,
@@ -122,12 +141,7 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                 resizeMode="cover"
               />
               <LinearGradient
-                colors={['transparent', isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)', isDark ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.1)']} // Adjust gradient for light mode? Actually gradient overlay on image usually stays dark for text readability if text is over image. But here text is below image. Wait, design has image top half, content bottom half.
-                // The gradient seems to be an overlay on the BOTTOM of the image? 
-                // "bottom: 0, height: 55%" -> Yes.
-                // If text is NOT on the image, we don't strictly need a strong gradient unless it blends into the card background.
-                // In Dark Mode: Card is #1F2937 (or similar). Gradient goes to 0.95 opacity black/dark? 
-                // Let's keep gradient simple or adjust if needed. For now, keep as is or slight adjust.
+                colors={['transparent', isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)', isDark ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.1)']}
                 style={styles.imageGradient}
               />
             </>
@@ -149,29 +163,50 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
             <Text style={[styles.description, { color: colors.muted }]} numberOfLines={6}>
               {article.content}
             </Text>
+
             <View style={[styles.footer, { borderColor: colors.border }]}>
-              <View>
+              <View style={styles.footerInfo}>
                 <Text style={styles.source}>Publisher: {article.source || 'Newsbite'}</Text>
                 <Text style={[styles.date, { color: colors.muted }]}>{formatDate(article.published_at)}</Text>
               </View>
-              <TouchableOpacity
-                onPress={() => {
-                  Alert.alert(
-                    'Report Article',
-                    'Would you like to report this content as inappropriate?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Report',
-                        onPress: () => Alert.alert('Thank you', 'We have received your report and will review this content.')
-                      }
-                    ]
-                  );
-                }}
-                style={[styles.reportButton, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}
-              >
-                <TriangleAlert size={16} color="#EF4444" />
-              </TouchableOpacity>
+
+              <View style={styles.actionsRow}>
+                {/* Bookmark */}
+                <TouchableOpacity
+                  onPress={() => toggleBookmark(article)}
+                  style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}
+                >
+                  <Bookmark size={20} color={bookmarked ? colors.tint : colors.muted} fill={bookmarked ? colors.tint : 'transparent'} />
+                </TouchableOpacity>
+
+                {/* Share */}
+                <TouchableOpacity
+                  onPress={handleShare}
+                  style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}
+                >
+                  <Share2 size={20} color={colors.muted} />
+                </TouchableOpacity>
+
+                {/* Report */}
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      'Report Article',
+                      'Would you like to report this content as inappropriate?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Report',
+                          onPress: () => Alert.alert('Thank you', 'We have received your report and will review this content.')
+                        }
+                      ]
+                    );
+                  }}
+                  style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2' }]}
+                >
+                  <TriangleAlert size={20} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -208,6 +243,10 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
               damping: 18,
               stiffness: 90,
             });
+            // Track history
+            if (articles[e.nativeEvent.position]) {
+              addToHistory(articles[e.nativeEvent.position]);
+            }
           }}
         >
           {articles.map((article, index) => (
@@ -310,11 +349,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  footerInfo: {
+    flex: 1,
+  },
+
   date: { fontSize: 13 },
   source: { color: '#0EA5E9', fontSize: 13, fontWeight: '600', marginBottom: 4 },
-  reportButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#FEF2F2',
+
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
+  actionButton: {
+    padding: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
 });
