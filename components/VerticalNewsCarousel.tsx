@@ -22,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.90;
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.8; // Reduced initial height estimate
 const CARD_WIDTH = SCREEN_WIDTH - 5;
 
 interface NewsItem {
@@ -233,12 +233,13 @@ const styles = StyleSheet.create({
 
   cardContainer: {
     width: CARD_WIDTH,
-    height: CARD_HEIGHT * 0.96,
+    flex: 1, // Take full height of the page
+    marginVertical: 10, // Add explicit margin to prevent overlap
     justifyContent: 'center',
   },
 
   card: {
-    flex: 1,
+    flex: 1, // Fill the container
     borderRadius: 26,
     overflow: 'hidden',
     backgroundColor: '#111418',
@@ -302,6 +303,9 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   date: { color: '#9CA3AF', fontSize: 13 },

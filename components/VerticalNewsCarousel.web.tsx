@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.90;
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.78; // Reduced to fit web viewports with headers
 const CARD_WIDTH = SCREEN_WIDTH - 5; // Matches native
 
 interface NewsItem {
@@ -153,7 +153,7 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                     style={styles.pager}
                     pagingEnabled
                     showsVerticalScrollIndicator={false}
-                    snapToInterval={CARD_HEIGHT * 0.96} // Snap to card height
+                    snapToInterval={window.innerHeight} // Snap to viewport height because pages are 100vh
                     snapToAlignment="center"
                     decelerationRate="fast"
                 // In web, strictly vertical scrolling
@@ -183,17 +183,17 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
 
-    pager: { flex: 1 },
+    pager: { flex: 1, height: '100%' }, // Explicit height for web scrollview container
     page: {
-        height: CARD_HEIGHT * 0.96, // Fixed height per page for basic vertical snapping simulation
+        height: '100vh', // Use viewport height for web to ensure full screen snapping
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        paddingVertical: 10,
     },
 
     cardContainer: {
         width: CARD_WIDTH,
-        height: '100%',
+        height: '96%', // Leave small gap
         justifyContent: 'center',
     },
 
@@ -262,6 +262,9 @@ const styles = StyleSheet.create({
         paddingTop: 12,
         borderTopWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
 
     date: { color: '#9CA3AF', fontSize: 13 },

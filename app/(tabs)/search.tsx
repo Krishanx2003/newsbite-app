@@ -437,7 +437,8 @@ export default function SearchScreen() {
         </ScrollView>
 
         {/* Notifications */}
-        <View style={styles.notificationContainer}>
+        {/* Commenting out notification for some time, enable afterwards */}
+        {/* <View style={styles.notificationContainer}>
           <TouchableOpacity style={styles.notificationButton}>
             <Bell size={20} color="#6B7280" />
             <View style={styles.notificationBadge}>
@@ -445,7 +446,7 @@ export default function SearchScreen() {
             </View>
           </TouchableOpacity>
           <Text style={styles.notificationText}>You have 3 unread notifications</Text>
-        </View>
+        </View> */}
       </View>
 
       {/* Content */}
