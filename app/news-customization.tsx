@@ -24,7 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function NewsCustomizationScreen() {
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors, isDark, toggleTheme, fontSize, setFontSize } = useTheme();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -56,6 +56,31 @@ export default function NewsCustomizationScreen() {
               value={isDark}
               onValueChange={toggleTheme}
             />
+          </View>
+        </View>
+
+        {/* Font Size Card */}
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionHeader, { color: colors.text }]}>Text Size</Text>
+          <View style={styles.fontSizeRow}>
+            <TouchableOpacity
+              onPress={() => setFontSize('small')}
+              style={[styles.sizeBtn, fontSize === 'small' && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}
+            >
+              <Text style={[styles.sizeText, { fontSize: 14, color: colors.text }]}>A</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setFontSize('medium')}
+              style={[styles.sizeBtn, fontSize === 'medium' && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}
+            >
+              <Text style={[styles.sizeText, { fontSize: 18, color: colors.text }]}>A</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setFontSize('large')}
+              style={[styles.sizeBtn, fontSize === 'large' && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}
+            >
+              <Text style={[styles.sizeText, { fontSize: 24, fontWeight: 'bold', color: colors.text }]}>A</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -125,4 +150,28 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
   },
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 16,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  fontSizeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 8,
+    padding: 4,
+  },
+  sizeBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 6,
+  },
+  sizeText: {
+    fontWeight: '600',
+  }
 });

@@ -34,10 +34,17 @@ interface VerticalNewsCarouselProps {
 }
 
 export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
-    const { colors, isDark } = useTheme();
-    const { toggleBookmark, isBookmarked } = useUserActivity();
+    const { colors, isDark, fontSize } = useTheme();
+    const { toggleBookmark, isBookmarked, addToHistory } = useUserActivity();
     const [articles, setArticles] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const getFontSize = (type: 'headline' | 'body') => {
+        const scale = fontSize === 'small' ? 0.85 : fontSize === 'large' ? 1.15 : 1;
+        if (type === 'headline') return 24 * scale;
+        if (type === 'body') return 15.5 * scale;
+        return 14;
+    };
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -139,13 +146,13 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                             </Text>
                         </View>
 
-                        <Text style={[styles.headline, { color: colors.text }]} numberOfLines={4}>
+                        <Text style={[styles.headline, { color: colors.text, fontSize: getFontSize('headline') }]} numberOfLines={4}>
                             {article.title}
                         </Text>
 
                         <View style={styles.divider} />
 
-                        <Text style={[styles.description, { color: colors.muted }]} numberOfLines={6}>
+                        <Text style={[styles.description, { color: colors.muted, fontSize: getFontSize('body'), lineHeight: getFontSize('body') * 1.6 }]} numberOfLines={6}>
                             {article.content}
                         </Text>
 
@@ -218,6 +225,12 @@ export function VerticalNewsCarousel({ category }: VerticalNewsCarouselProps) {
                     snapToInterval={window.innerHeight} // Snap to viewport height because pages are 100vh
                     snapToAlignment="center"
                     decelerationRate="fast"
+                    onMomentumScrollEnd={(e) => {
+                        const index = Math.round(e.nativeEvent.contentOffset.y / e.nativeEvent.layoutMeasurement.height);
+                        if (articles[index]) {
+                            addToHistory(articles[index]);
+                        }
+                    }}
                 // In web, strictly vertical scrolling
                 >
                     {articles.map((article, index) => (
