@@ -1,5 +1,5 @@
 import { useTheme } from '@/context/ThemeContext';
-import { supabase } from '@/lib/supabase';
+import { CategoryService } from '@/services/category.service';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -86,12 +86,9 @@ export function CategoryTabs() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('name')
-        .order('created_at', { ascending: true });
+      const data = await CategoryService.fetchCategories();
 
-      if (!error && data) {
+      if (data) {
         const fetchedRoutes = data.map((c) => ({
           key: c.name.toLowerCase().replace(/\s+/g, '-'),
           title: c.name,

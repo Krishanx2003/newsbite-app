@@ -1,22 +1,8 @@
+import { NewsItem, UserProfile } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-
-// Define NewsItem interface here to avoid circular deps
-export interface NewsItem {
-    id: string;
-    title: string;
-    content: string;
-    category: string;
-    published_at: string;
-    image_url: string | null;
-    source?: string;
-}
-
-export type UserProfile = {
-    name: string;
-    bio: string;
-    avatar: string | null;
-};
+import { Platform } from 'react-native';
 
 interface UserActivityContextType {
     bookmarks: NewsItem[];
@@ -50,7 +36,13 @@ export function UserActivityProvider({ children }: { children: React.ReactNode }
         try {
             const savedBookmarks = await AsyncStorage.getItem('user_bookmarks');
             const savedHistory = await AsyncStorage.getItem('user_history');
-            const savedProfile = await AsyncStorage.getItem('user_profile');
+
+            let savedProfile: string | null = null;
+            if (Platform.OS !== 'web') {
+                savedProfile = await SecureStore.getItemAsync('user_profile');
+            } else {
+                savedProfile = await AsyncStorage.getItem('user_profile');
+            }
 
             if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
             if (savedHistory) setHistory(JSON.parse(savedHistory));
@@ -72,7 +64,12 @@ export function UserActivityProvider({ children }: { children: React.ReactNode }
 
     const saveProfile = async (newProfile: UserProfile) => {
         setUserProfile(newProfile);
-        await AsyncStorage.setItem('user_profile', JSON.stringify(newProfile));
+        const jsonProfile = JSON.stringify(newProfile);
+        if (Platform.OS !== 'web') {
+            await SecureStore.setItemAsync('user_profile', jsonProfile);
+        } else {
+            await AsyncStorage.setItem('user_profile', jsonProfile);
+        }
     };
 
     const toggleBookmark = (article: NewsItem) => {
@@ -107,7 +104,12 @@ export function UserActivityProvider({ children }: { children: React.ReactNode }
     const clearAllData = async () => {
         await AsyncStorage.removeItem('user_bookmarks');
         await AsyncStorage.removeItem('user_history');
-        await AsyncStorage.removeItem('user_profile');
+        if (Platform.OS !== 'web') {
+            await SecureStore.deleteItemAsync('user_profile');
+        } else {
+            await AsyncStorage.removeItem('user_profile');
+        }
+
         setBookmarks([]);
         setHistory([]);
         setUserProfile({
