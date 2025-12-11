@@ -107,9 +107,9 @@ export default function OnboardingScreen() {
                                     <>
                                         <TouchableOpacity
                                             style={[styles.authButton, { backgroundColor: colors.tint }]}
-                                            onPress={handleFinish}
+                                            onPress={() => router.push('/auth/login')}
                                         >
-                                            <Text style={styles.authButtonText}>Sign In with Google</Text>
+                                            <Text style={styles.authButtonText}>Sign In</Text>
                                         </TouchableOpacity>
 
                                         <TouchableOpacity

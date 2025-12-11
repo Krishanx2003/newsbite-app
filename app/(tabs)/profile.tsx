@@ -1,12 +1,14 @@
 import { useUserActivity } from '@/context/UserActivityContext';
 import { useTheme } from '@/context/ThemeContext';
 import { router } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 import {
   Bookmark,
   ChevronRight,
   Clock,
   FileText,
   Info,
+  LogOut,
   Mail,
   MessageSquare,
   Settings,
@@ -86,6 +88,7 @@ export default function ProfileTab() {
   const { colors, toggleTheme, theme } = useTheme();
   const { clearAllData, userProfile } = useUserActivity();
   const { setScreenPrivacy } = useSecurity();
+  const { user, logout } = useAuth();
 
   useFocusEffect(
     useCallback(() => {
@@ -122,15 +125,37 @@ export default function ProfileTab() {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone and all your data (bookmarks, history, preferences) will be permanently lost.',
+      'Are you sure you want to delete your account? Your account will be deactivated immediately and permanently deleted after 72 hours. Please do not sign in during this period to ensure deletion.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            // In a real app, call a delete/deactivate API here. 
+            // For now, we simulate by clearing local data and logging out.
             await clearAllData();
-            Alert.alert('Account Deleted', 'Your data has been cleared from this device.');
+            await logout(); // This updates context
+            Alert.alert('Account Deactivated', 'Your data has been cleared from this device and your account is scheduled for deletion.');
+            // Stay on profile page, which will switch to Guest view
+          }
+        }
+      ]
+    );
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/(tabs)'); // Refresh or ensure state clears
           }
         }
       ]
@@ -145,30 +170,51 @@ export default function ProfileTab() {
         contentContainerStyle={styles.scrollContent}>
         {/* User Profile Header */}
         <View style={styles.profileHeader}>
-          <TouchableOpacity onPress={() => router.push('/edit-profile')} activeOpacity={0.8}>
-            <View style={[styles.avatarContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-              {/* Fallback to initials if no avatar */}
-              <Text style={[styles.avatarText, { color: colors.tint }]}>
-                {userProfile?.name?.charAt(0) || 'R'}
-              </Text>
-            </View>
-            {/* Edit Icon Badge */}
-            <View style={[styles.editBadge, { backgroundColor: colors.tint, borderColor: colors.background }]}>
-              <Settings size={12} color="#FFF" />
-            </View>
-          </TouchableOpacity>
+          {user ? (
+            <>
+              <TouchableOpacity onPress={() => router.push('/edit-profile')} activeOpacity={0.8}>
+                <View style={[styles.avatarContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                  {/* Use Auth user email initial or Profile name */}
+                  <Text style={[styles.avatarText, { color: colors.tint }]}>
+                    {user.email?.charAt(0).toUpperCase() || userProfile?.name?.charAt(0) || 'U'}
+                  </Text>
+                </View>
+                <View style={[styles.editBadge, { backgroundColor: colors.tint, borderColor: colors.background }]}>
+                  <Settings size={12} color="#FFF" />
+                </View>
+              </TouchableOpacity>
 
-          <View style={styles.profileInfo}>
-            <Text style={[styles.userName, { color: colors.text }]}>{userProfile?.name || 'Reader'}</Text>
-            <Text style={[styles.userBio, { color: colors.muted }]}>{userProfile?.bio || 'News enthusiast'}</Text>
+              <View style={styles.profileInfo}>
+                <Text style={[styles.userName, { color: colors.text }]}>{userProfile?.name || user.email.split('@')[0]}</Text>
+                <Text style={[styles.userBio, { color: colors.muted }]}>{userProfile?.bio || user.email}</Text>
 
-            <TouchableOpacity
-              onPress={() => router.push('/edit-profile')}
-              style={[styles.editProfileBtn, { backgroundColor: colors.button }]}
-            >
-              <Text style={[styles.editProfileText, { color: colors.buttonText }]}>Edit Profile</Text>
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  onPress={() => router.push('/edit-profile')}
+                  style={[styles.editProfileBtn, { backgroundColor: colors.button }]}
+                >
+                  <Text style={[styles.editProfileText, { color: colors.buttonText }]}>Edit Profile</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={[styles.avatarContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.avatarText, { color: colors.muted }]}>?</Text>
+              </View>
+
+              <View style={styles.profileInfo}>
+                <Text style={[styles.userName, { color: colors.text }]}>Guest User</Text>
+                <Text style={[styles.userBio, { color: colors.muted }]}>Sign in to sync your preferences</Text>
+
+                <TouchableOpacity
+                  onPress={() => router.push('/auth/login')}
+                  style={[styles.editProfileBtn, { backgroundColor: colors.tint, marginTop: 10 }]}
+                >
+                  <Text style={[styles.editProfileText, { color: '#FFF' }]}>Sign In / Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.divider} />
@@ -269,25 +315,35 @@ export default function ProfileTab() {
         </View>
 
         {/* Menu Section: Danger Zone */}
-        <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: '#EF4444' }]}>Danger Zone</Text>
-          <View style={styles.menuSection}>
-            <MenuItem
-              icon={<Trash2 size={22} color="#EF4444" strokeWidth={2} />}
-              title="Delete Account"
-              subtitle="Permanently remove your data"
-              onPress={handleDeleteAccount}
-              isDestructive
-            />
+        {/* Menu Section: Danger Zone - Only for Logged In Users */}
+        {user && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: '#EF4444' }]}>Account Actions</Text>
+            <View style={styles.menuSection}>
+              <MenuItem
+                icon={<LogOut size={22} color={colors.text} strokeWidth={2} />}
+                title="Log Out"
+                subtitle="Sign out of your account"
+                onPress={handleLogout}
+              />
+              <MenuItem
+                icon={<Trash2 size={22} color="#EF4444" strokeWidth={2} />}
+                title="Delete Account"
+                subtitle="Permanently remove your data"
+                onPress={handleDeleteAccount}
+                isDestructive
+              />
+            </View>
           </View>
-        </View>
+        )}
+
 
         {/* App Version */}
         <View style={styles.versionContainer}>
           <Text style={[styles.versionText, { color: colors.muted }]}>Version 1.0.3</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollView >
+    </SafeAreaView >
   );
 }
 

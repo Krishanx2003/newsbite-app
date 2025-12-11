@@ -4,6 +4,7 @@ import { SecurityProvider, useSecurity } from '@/context/SecurityContext'; // Re
 import { ThemeProvider, useTheme } from '@/context/ThemeContext'; // Restored
 import { UserActivityProvider } from '@/context/UserActivityContext'; // Restored
 import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
+import { AuthProvider } from '@/context/AuthContext'; // Added
 import { Stack } from 'expo-router'; // Restored
 import { StatusBar } from 'expo-status-bar'; // Restored
 import React from 'react';
@@ -20,16 +21,18 @@ export default function RootLayout() {
     <NotificationProvider>
       <UserActivityProvider>
         <OnboardingProvider>
-          <SecurityProvider>
-            <ThemeProvider>
-              {/* We can use the ThemeProvider from navigation if needed, or just rely on our custom one. 
+          <AuthProvider>
+            <SecurityProvider>
+              <ThemeProvider>
+                {/* We can use the ThemeProvider from navigation if needed, or just rely on our custom one. 
                     However, we need to pass the correct theme to Navigation Container for standard headers/etc. 
                     But since we are inside app/_layout, the Stack manages that? 
                     Actually, Stack is from expo-router. 
                 */}
-              <InnerLayout />
-            </ThemeProvider>
-          </SecurityProvider>
+                <InnerLayout />
+              </ThemeProvider>
+            </SecurityProvider>
+          </AuthProvider>
         </OnboardingProvider>
       </UserActivityProvider>
     </NotificationProvider>
@@ -88,6 +91,8 @@ function InnerLayout() {
         <Stack.Screen name="saved" options={{ headerShown: false }} />
         <Stack.Screen name="history" options={{ headerShown: false }} />
         <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
       </Stack>
 
       {/* Redirect to onboarding if not seen yet */}
