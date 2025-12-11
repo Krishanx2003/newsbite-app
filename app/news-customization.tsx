@@ -104,6 +104,18 @@ export default function NewsCustomizationScreen() {
           </View>
         </View>
 
+        {/* Onboarding Tour Card */}
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionHeader, { color: colors.text }]}>General</Text>
+          <TouchableOpacity
+            style={[styles.tourButton, { backgroundColor: colors.tint }]}
+            onPress={() => router.push('/onboarding?replay=true')}
+          >
+            <Text style={styles.tourButtonText}>View Welcome Tour</Text>
+            <ChevronLeft size={20} color="#FFF" style={{ transform: [{ rotate: '180deg' }] }} />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.infoContainer}>
           <Text style={[styles.infoText, { color: colors.muted }]}>
             Toggle to switch between light and dark themes. Your preference will be saved automatically.
@@ -192,6 +204,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   sizeText: {
+    fontWeight: '600',
+  },
+  tourButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 8,
+    gap: 8,
+  },
+  tourButtonText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '600',
   }
 });
