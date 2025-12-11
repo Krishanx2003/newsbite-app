@@ -8,6 +8,7 @@
     "scheme": "newsbiteapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/images/newsbite-logo.png",
       "resizeMode": "contain",
@@ -15,7 +16,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.krishanx20033.newsbiteapp"
+      "bundleIdentifier": "com.krishanx20033.newsbiteapp",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Newsbite uses FaceID to secure your personal news history."
+      }
     },
     "android": {
       "package": "com.krishanx20033.newsbiteapp",

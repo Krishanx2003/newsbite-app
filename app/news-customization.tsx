@@ -2,7 +2,8 @@
 import { useTheme } from '@/context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router'; // ✅ Added
-import { ChevronLeft, Moon, Sun } from 'lucide-react-native';
+import { useSecurity } from '@/context/SecurityContext'; // ✅ Added
+import { ChevronLeft, Moon, Shield, Sun } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -25,6 +26,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function NewsCustomizationScreen() {
   const { colors, isDark, toggleTheme, fontSize, setFontSize } = useTheme();
+  const { isAppLockEnabled, toggleAppLock } = useSecurity();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -55,6 +57,24 @@ export default function NewsCustomizationScreen() {
               ios_backgroundColor="#E5E7EB"
               value={isDark}
               onValueChange={toggleTheme}
+            />
+          </View>
+        </View>
+
+        {/* Security Card */}
+        <View style={[styles.card, { backgroundColor: colors.card, shadowColor: isDark ? '#000' : '#000' }]}>
+          <Text style={[styles.sectionHeader, { color: colors.text }]}>Security</Text>
+          <View style={styles.toggleRow}>
+            <Shield size={22} color={colors.tint} />
+            <Text style={[styles.toggleLabel, { color: colors.text }]}>
+              Biometric App Lock
+            </Text>
+            <Switch
+              trackColor={{ false: '#E5E7EB', true: colors.tint }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#E5E7EB"
+              value={isAppLockEnabled}
+              onValueChange={toggleAppLock}
             />
           </View>
         </View>

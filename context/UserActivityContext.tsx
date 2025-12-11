@@ -1,8 +1,6 @@
+import { StorageService } from '@/services/storage.service';
 import { NewsItem, UserProfile } from '@/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
 
 interface UserActivityContextType {
     bookmarks: NewsItem[];
@@ -34,19 +32,14 @@ export function UserActivityProvider({ children }: { children: React.ReactNode }
 
     const loadData = async () => {
         try {
-            const savedBookmarks = await AsyncStorage.getItem('user_bookmarks');
-            const savedHistory = await AsyncStorage.getItem('user_history');
+            // Decryption happens automatically in StorageService
+            const savedBookmarks = await StorageService.getItem<NewsItem[]>('user_bookmarks');
+            const savedHistory = await StorageService.getItem<NewsItem[]>('user_history');
+            const savedProfile = await StorageService.getItem<UserProfile>('user_profile');
 
-            let savedProfile: string | null = null;
-            if (Platform.OS !== 'web') {
-                savedProfile = await SecureStore.getItemAsync('user_profile');
-            } else {
-                savedProfile = await AsyncStorage.getItem('user_profile');
-            }
-
-            if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
-            if (savedHistory) setHistory(JSON.parse(savedHistory));
-            if (savedProfile) setUserProfile(JSON.parse(savedProfile));
+            if (savedBookmarks) setBookmarks(savedBookmarks);
+            if (savedHistory) setHistory(savedHistory);
+            if (savedProfile) setUserProfile(savedProfile);
         } catch (e) {
             console.error('Failed to load user activity', e);
         }
@@ -54,22 +47,18 @@ export function UserActivityProvider({ children }: { children: React.ReactNode }
 
     const saveBookmarks = async (newBookmarks: NewsItem[]) => {
         setBookmarks(newBookmarks);
-        await AsyncStorage.setItem('user_bookmarks', JSON.stringify(newBookmarks));
+        // Encryption happens automatically
+        await StorageService.setItem('user_bookmarks', newBookmarks);
     };
 
     const saveHistory = async (newHistory: NewsItem[]) => {
         setHistory(newHistory);
-        await AsyncStorage.setItem('user_history', JSON.stringify(newHistory));
+        await StorageService.setItem('user_history', newHistory);
     };
 
     const saveProfile = async (newProfile: UserProfile) => {
         setUserProfile(newProfile);
-        const jsonProfile = JSON.stringify(newProfile);
-        if (Platform.OS !== 'web') {
-            await SecureStore.setItemAsync('user_profile', jsonProfile);
-        } else {
-            await AsyncStorage.setItem('user_profile', jsonProfile);
-        }
+        await StorageService.setItem('user_profile', newProfile);
     };
 
     const toggleBookmark = (article: NewsItem) => {
@@ -102,13 +91,9 @@ export function UserActivityProvider({ children }: { children: React.ReactNode }
     };
 
     const clearAllData = async () => {
-        await AsyncStorage.removeItem('user_bookmarks');
-        await AsyncStorage.removeItem('user_history');
-        if (Platform.OS !== 'web') {
-            await SecureStore.deleteItemAsync('user_profile');
-        } else {
-            await AsyncStorage.removeItem('user_profile');
-        }
+        await StorageService.removeItem('user_bookmarks');
+        await StorageService.removeItem('user_history');
+        await StorageService.removeItem('user_profile');
 
         setBookmarks([]);
         setHistory([]);

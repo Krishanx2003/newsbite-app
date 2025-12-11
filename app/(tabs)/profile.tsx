@@ -15,7 +15,9 @@ import {
   Star,
   Trash2
 } from 'lucide-react-native';
-import React from 'react';
+import { useSecurity } from '@/context/SecurityContext';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback } from 'react';
 import {
   Alert,
   Linking,
@@ -83,6 +85,19 @@ function MenuItem({ icon, title, subtitle, onPress, isDestructive }: MenuItemPro
 export default function ProfileTab() {
   const { colors, toggleTheme, theme } = useTheme();
   const { clearAllData, userProfile } = useUserActivity();
+  const { setScreenPrivacy } = useSecurity();
+
+  useFocusEffect(
+    useCallback(() => {
+      // Screen focused: Prevent screenshot
+      setScreenPrivacy(true);
+
+      return () => {
+        // Screen lost focus: Allow screenshot
+        setScreenPrivacy(false);
+      };
+    }, [])
+  );
 
   const handlePreferences = () => {
     router.push('/news-customization');
